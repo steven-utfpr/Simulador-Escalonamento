@@ -41,8 +41,7 @@ def CriarTelaConfig(self,root):
     
     campoTempoAtual = tk.Entry(frame, width=5)
     campoTempoAtual.insert(0,"0")
-    
-    
+        
     self.infoAlgo = tk.StringVar()
     self.infoAlgo.set("Algoritmo:")
     self.infoQuantum = tk.StringVar()
@@ -53,6 +52,7 @@ def CriarTelaConfig(self,root):
     infoAlgo = tk.Label(frame, textvariable=self.infoAlgo, font=("Arial", 12), bg="lightgray")
     infoQuantum = tk.Label(frame, textvariable=self.infoQuantum, font=("Arial", 12), bg="lightgray")
     infoTempoAtual = tk.Label(frame, textvariable=self.infoTempoAtual, font=("Arial", 12), bg="lightgray")
+    infoExtra = tk.Label(frame, text="Clique na Barra\n para ver mais\n Informações", font=("Arial", 12), bg="lightgray")
 
     tituloConfig.grid(row=0, column=0, padx=2, pady=5)
     btnIniciar.grid(row=1, column=0, padx=2, pady=5, )
@@ -68,29 +68,38 @@ def CriarTelaConfig(self,root):
     infoAlgo.grid(row=7, column=0, padx=2, pady=5)
     infoQuantum.grid(row=8, column=0, padx=2, pady=5)
     infoTempoAtual.grid(row=9, column=0, padx=2, pady=5)    
+    infoExtra.grid(row=10, column=0, padx=2, pady=5)  
 
     return frame, campoTempoAtual, arqAtualEntry
 
 def CriarTelaGantt(root):
     """Cria o painel direito com gráfico de Gantt com borda externa (como no exemplo)"""
-    frame = tk.Frame(root, width=600, height=400, bg="lightgray", padx=10, pady=10)
+    frame = tk.Frame(root, width=600, height=250, bg="lightgray", padx=10, pady=10)
     frame.pack(side="right", fill="both", expand=True)
 
     tk.Label(frame, text="Gráfico de Gantt", font=("Arial", 12),bg="lightgray").pack()
 
-    canvas = tk.Canvas(frame, bg="white", height=400)
+    canvas = tk.Canvas(frame, bg="white", height=250)
     canvas.pack(fill="both", expand=True)
+    
+    vScroll = tk.Scrollbar(canvas, orient="vertical", command=canvas.yview)
+    vScroll.pack(side="right", fill="y")
+
+    hScroll = tk.Scrollbar(canvas, orient="horizontal", command=canvas.xview)
+    hScroll.pack(side="bottom", fill="x", padx=10)
+
+    canvas.config(yscrollcommand=vScroll.set, xscrollcommand=hScroll.set)
     
     return frame, canvas
 
 def CriarTelaInfos(root):
     """Cria o painel inferior para logs"""
-    frame = tk.Frame(root, height=100, bg="black", padx=10, pady=10)
+    frame = tk.Frame(root, height=500, bg="black", padx=10, pady=25)
     frame.pack(side="bottom", fill="x")
 
-    tk.Label(frame, text="Log da Simulação", fg="white", bg="black").pack()
+    tk.Label(frame, text="Log do Bloco", fg="white", bg="black").pack()
 
-    log = tk.Text(frame, height=4, bg="black", fg="lime", font=("Courier", 10))
+    log = tk.Text(frame, height=40, bg="black", fg="lime", font=("Courier", 10), pady=15)
     log.pack(fill="both", expand=True)
 
     scroll = tk.Scrollbar(log, orient="vertical", command=log.yview)

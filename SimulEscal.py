@@ -19,7 +19,7 @@ import struct
 
 import tkinter as tk
 from Janelas import CriarInterface
-from Funcoes import LerArquivo, SelArquivo, WriteLockBox, GerarInstrucoes,ProcessarDados, AtualizarLog
+from Funcoes import LerArquivo, SelArquivo, WriteLockBox, GerarInstrucoes,ProcessarDados, AtualizarLog,DefinirScrollGantt
 from Grafico import GerarGrafico, CriarBarra, ApagarBarra
 from Algoritmos import FIFO, SRTF, PrioP
 
@@ -51,10 +51,12 @@ class SimulEscal:
         else:
             self.tarefas, self.algoritmo, self.quantum = self.UsarConfigPadrao()            
 
-        self.instrucoes = GerarInstrucoes(self.algoritmo, self.tarefas)
+        self.instrucoes, self.instrucoesInativos = GerarInstrucoes(self.algoritmo, self.tarefas)
         self.maxTempo = len(self.instrucoes) 
         self.maxTid = len(self.tarefas)
-        GerarGrafico(self.canvasGantt, self.graficoConfig, self.instrucoes, self.tarefas, self.tempoAtual, self.maxTempo, self.maxTid, self.usarPasso)
+        DefinirScrollGantt(self.canvasGantt, self.graficoConfig, self.maxTempo, self.maxTid)
+        
+        GerarGrafico(self.canvasGantt, self.graficoConfig, self.instrucoes, self.instrucoesInativos, self.maxTempo, self.maxTid, self.usarPasso,self.PegarInfoBarra)
         self.AtualizarInfos()
 
     def AtualizarInfos(self):
@@ -63,7 +65,7 @@ class SimulEscal:
 
     def UsarConfigPadrao(self):
         tarefas = []
-        configPadrao = 'FIFO;2\n', 't01;0;0;5;2;\n', 't02;1;0;4;3;\n', 't03;2;3;5;5;\n', 't04;3;5;6;9;\n', 't05;4;7;4;6;\n'
+        configPadrao = 'FIFO;2\n', 't01;0;0;5;2;\n', 't02;1;0;2;3;\n', 't03;2;1;4;1;\n', 't04;3;3;1;4;\n', 't05;4;5;2;5;\n'
         tarefas, algoritmo, quantum = ProcessarDados(configPadrao)
        
         return tarefas, algoritmo, quantum
@@ -76,10 +78,29 @@ class SimulEscal:
         self.tempoAtual=0
         self.IniciarSimulacao()
 
+    def PegarInfoBarra(self,tid, tempo):
+        info = f"""\
+   DETALHES DA TAREFA
+────────────────────────────
+Tarefa: T{tid + 1}| Algoritmo: {self.algoritmo} | Quantum: {self.quantum}
+Estado: {self.instrucoes[tempo]['estado']} 
+Tempo Ingresso: {self.instrucoes[tempo]['ingressoTempo']} | Tempo Restante: {self.instrucoes[tempo]['duracaoRestante']}
+Duração Total: {self.instrucoes[tempo]['duracao']} | Prioridade: {self.instrucoes[tempo]['prioridade']} | Cor (índice): {self.instrucoes[tempo]['cor']}
+────────────────────────────
+"""
+        AtualizarLog(self.logBox, info)
+    
     def AvancarPasso(self):       
         if self.tarefas and self.usarPasso:    
             if(self.tempoAtual < len(self.instrucoes)): 
-                self.barra, self.barraText = CriarBarra(self.canvasGantt, self.graficoConfig, self.tempoAtual+1, self.maxTid, self.instrucoes[self.tempoAtual]['id']-1, self.instrucoes[self.tempoAtual]['cor']+1)
+                self.barra, self.barraText = CriarBarra(
+                    self.canvasGantt, 
+                    self.graficoConfig, 
+                    self.tempoAtual, 
+                    self.maxTid, 
+                    self.instrucoes[self.tempoAtual]['id']-1, 
+                    self.instrucoes[self.tempoAtual]['cor']+1, 
+                    self.PegarInfoBarra)
                 self.barraID.append(
                     {
                         'barra' : self.barra,

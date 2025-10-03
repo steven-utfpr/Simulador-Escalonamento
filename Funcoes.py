@@ -15,13 +15,69 @@ def SelArquivo(arqSel):
         return caminho
     
 def GerarInstrucoes(algoritmo, tarefas):
+    instrucoes = []
+    instrucoesInativas = []
+    tempoMax = DuracaoTotal(tarefas)
+    tarefas = sorted(tarefas, key=lambda x: x['ingressoTarefa'])
     algoritimos = {
         "FIFO": FIFO,
         "SRTF": SRTF,
         "PrioP": PrioP
     }
-    instrucoes = algoritimos[algoritmo](tarefas)
-    return instrucoes
+    for i in range(tempoMax):
+        instrucao, listaInativos =algoritimos[algoritmo](tarefas, i)
+        tarefas[PegarUltimaTarefa(tarefas,instrucao)]['duracaoRestante']-=1
+        tarefas[PegarUltimaTarefa(tarefas,instrucao)]['ingressoTempo'] = i
+        instrucoes.append(       
+           CriarDadosInstrucao(instrucao, i,False)           
+        )       
+        
+        for u in range(len(listaInativos)):
+            instrucoesInativas.append (
+                CriarDadosInstrucao(listaInativos[u], i,True)
+            )
+
+    return instrucoes, instrucoesInativas
+
+def CriarDadosInstrucao(instrucao, tempoIngresso, inativo):
+    if inativo:
+        cor = 0
+        estado = "Inativo"
+    else:
+        cor = instrucao['cor']  
+        estado = "Em Execução"
+        
+    return{
+        'nome': instrucao['nome'],
+        'id': instrucao['id'], 
+        'cor': cor, 
+        'ingressoTarefa': instrucao['ingressoTarefa'], 
+        'ingressoTempo': tempoIngresso, 
+        'duracao': instrucao['duracao'], 
+        'duracaoRestante': instrucao['duracaoRestante'], 
+        'prioridade': instrucao['prioridade'], 
+        'estado': estado,
+        'eventos': instrucao['eventos']
+        }
+
+def DuracaoTotal(tarefas):
+    count = 0
+    for tarefa in tarefas:
+        count += tarefa['duracao']
+    return count
+
+def PegarUltimaTarefa(tarefas, instrucao):
+    for i in range(len(tarefas)):
+        if instrucao['id'] == tarefas[i]['id']:
+            return i
+    return -1
+    
+
+def DefinirScrollGantt(canvasGantt, config, maxTempo, maxTid):
+    largTotal = config['escalaX'] * (maxTempo + 2)
+    altTotal = config['escalaY'] * (maxTid + 2)
+
+    canvasGantt.config(scrollregion=(0,0 ,largTotal,altTotal))
 
 def WriteLockBox(entryBox, texto):
     entryBox.config(state="normal")
@@ -57,11 +113,13 @@ def ProcessarDados(texto):
             {
                 'nome': nome,
                 'id': id,
-                'cor': cor,
-                'ingresso': ingresso,
+                'cor': cor + 1,
+                'ingressoTarefa': ingresso,
+                'ingressoTempo' : 0,
                 'duracao': duracao,
+                'duracaoRestante': duracao,
                 'prioridade': prioridade,
-                'eventos': eventos
+                'eventos': eventos                
             }
         )
     return tarefas, algoritmo, quantum

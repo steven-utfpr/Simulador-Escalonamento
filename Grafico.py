@@ -7,32 +7,50 @@ from Funcoes import GerarInstrucoes, ResetarValores
 cores = ['white', 'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan', 'magenta', 'lime', 'teal',
           'lavender', 'brown', 'beige', 'maroon', 'navy', 'olive', 'coral', 'grey', 'black']
 
-def GerarGrafico(canvasGantt, config, instrucoes, tarefas, tempoAtual, maxTempo, maxTid, usarPasso):
+def GerarGrafico(canvasGantt, config, instrucoes, instrucoesInativas, maxTempo, maxTid, usarPasso, PegarInfoBarra=None):
     canvasGantt.delete("all")
     #ResetarValores(self)    
     CriarBordas(canvasGantt, config, maxTempo, maxTid)
     CriarEixos(canvasGantt, config, maxTempo, maxTid)
     if not usarPasso:
-        tempoAtual = 1
         for instrucao in instrucoes:
-            CriarBarra(canvasGantt, config, tempoAtual, maxTid, instrucao['id']-1, instrucao['cor']+ 1)
-            tempoAtual+=1
+            CriarBarra(canvasGantt, config, instrucao['ingressoTempo'], maxTid, instrucao['id']-1, instrucao['cor'], PegarInfoBarra)
+            for instrucaoInativa in instrucoesInativas:
+                CriarBarra(canvasGantt, config, instrucaoInativa['ingressoTempo'], maxTid, instrucaoInativa['id']-1, instrucaoInativa['cor'], PegarInfoBarra)
+            
+                   
 
 def ApagarBarra(canvasGantt, barra, tempoAtual):
     canvasGantt.delete(barra[tempoAtual]['barra'])
     canvasGantt.delete(barra[tempoAtual]['barraText'])
     del barra[tempoAtual]
 
-def CriarBarra(canvasGantt,config, tempoAtual, maxTid, tidAtual, cor):
+def CriarBarra(canvasGantt,config, tempoAtual, maxTid, tidAtual, cor, PegarInfoBarra=None):
     escalaX = config['escalaX']
     escalaY = config['escalaY']
-    xMin = escalaX * tempoAtual # Posição inicial no eixo X
-    xMax = escalaX * (tempoAtual) + escalaX # Posição final no eixo X, fechando o retângulo criado no espaço de tempo
+    xMin = escalaX * (tempoAtual+1) # Posição inicial no eixo X
+    xMax = escalaX * (tempoAtual+1) + escalaX # Posição final no eixo X, fechando o retângulo criado no espaço de tempo
     yMin = (escalaY  * (maxTid - tidAtual)) + 5 # Posição inicial no eixo Y, utilizando id como multiplicador
     yMax = (escalaY  * (maxTid - tidAtual)) + escalaY  # Posição final no eixo Y, fechando o retângulo criado com a base inicial em yMin
     rectID = canvasGantt.create_rectangle(xMin, yMin, xMax, yMax, fill=cores[cor], outline="black")
     rectTextID = canvasGantt.create_text((xMin + xMax) / 2, (yMin + yMax) / 2, text=f"T{tidAtual+1}", fill="black")    
-           
+    
+     # Função de destaque (hover)
+    def on_enter(event):
+        canvasGantt.itemconfig(rectID, width=3, outline="darkblue")  # destaca
+
+    def on_leave(event):
+        canvasGantt.itemconfig(rectID, width=1, outline="black")     # volta ao normal
+
+    canvasGantt.tag_bind(rectID, "<Enter>", on_enter)
+    canvasGantt.tag_bind(rectID, "<Leave>", on_leave)
+    canvasGantt.tag_bind(rectTextID, "<Enter>", on_enter)
+    canvasGantt.tag_bind(rectTextID, "<Leave>", on_leave)
+
+    if PegarInfoBarra is not None:
+        canvasGantt.tag_bind(rectID, "<Button-1>", lambda event: PegarInfoBarra(tid = tidAtual, tempo = tempoAtual))
+        canvasGantt.tag_bind(rectTextID, "<Button-1>", lambda event: PegarInfoBarra(tid = tidAtual, tempo = tempoAtual))
+
     return rectID, rectTextID
 
 def CriarBordas(canvasGantt, config, maxTempo, maxTid):
@@ -63,8 +81,6 @@ def CriarEixos(canvasGantt, config, maxTempo, maxTid):
     for t in range(maxTid):
         canvasGantt.create_text(escalaX-25, (escalaY * (t +1))+15 , text="t"+str(maxTid-t) , font=("Arial", 9))
         canvasGantt.create_line(escalaX-10, (escalaY * (t +1))+15, escalaX, (escalaY * (t +1))+15, width=2)       
-
-
 
 
 def diagramTeste():
