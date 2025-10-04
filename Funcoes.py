@@ -14,9 +14,10 @@ def SelArquivo(arqSel):
         WriteLockBox(arqSel, nomeArquivo)
         return caminho
     
-def GerarInstrucoes(algoritmo, tarefas):
+def GerarInstrucoes(algoritmo, tarefas, quantum):
     instrucoes = []
     instrucoesInativas = []
+    count = quantum
     tempoMax = DuracaoTotal(tarefas)
     tarefas = sorted(tarefas, key=lambda x: x['ingressoTarefa'])
     algoritimos = {
@@ -32,10 +33,11 @@ def GerarInstrucoes(algoritmo, tarefas):
            CriarDadosInstrucao(instrucao, i,False)           
         )       
         
-        for u in range(len(listaInativos)):
-            instrucoesInativas.append (
-                CriarDadosInstrucao(listaInativos[u], i,True)
-            )
+        if listaInativos:
+            for u in range(len(listaInativos)):
+                instrucoesInativas.append (
+                    CriarDadosInstrucao(listaInativos[u], i,True)
+                )
 
     return instrucoes, instrucoesInativas
 
@@ -46,7 +48,7 @@ def CriarDadosInstrucao(instrucao, tempoIngresso, inativo):
     else:
         cor = instrucao['cor']  
         estado = "Em Execução"
-        
+    
     return{
         'nome': instrucao['nome'],
         'id': instrucao['id'], 

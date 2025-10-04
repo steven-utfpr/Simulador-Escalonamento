@@ -51,12 +51,12 @@ class SimulEscal:
         else:
             self.tarefas, self.algoritmo, self.quantum = self.UsarConfigPadrao()            
 
-        self.instrucoes, self.instrucoesInativos = GerarInstrucoes(self.algoritmo, self.tarefas)
+        self.instrucoes, self.instrucoesInativos = GerarInstrucoes(self.algoritmo, self.tarefas, self.quantum)
         self.maxTempo = len(self.instrucoes) 
         self.maxTid = len(self.tarefas)
         DefinirScrollGantt(self.canvasGantt, self.graficoConfig, self.maxTempo, self.maxTid)
         
-        GerarGrafico(self.canvasGantt, self.graficoConfig, self.instrucoes, self.instrucoesInativos, self.maxTempo, self.maxTid, self.usarPasso,self.PegarInfoBarra)
+        GerarGrafico(self.canvasGantt, self.graficoConfig, self.instrucoes, self.instrucoesInativos, self.maxTempo, self.maxTid, self.usarPasso, self.PegarInfoBarra)
         self.AtualizarInfos()
 
     def AtualizarInfos(self):
@@ -78,14 +78,13 @@ class SimulEscal:
         self.tempoAtual=0
         self.IniciarSimulacao()
 
-    def PegarInfoBarra(self,tid, tempo):
+    def PegarInfoBarra(self,instrucao):
         info = f"""\
    DETALHES DA TAREFA
 ────────────────────────────
-Tarefa: T{tid + 1}| Algoritmo: {self.algoritmo} | Quantum: {self.quantum}
-Estado: {self.instrucoes[tempo]['estado']} 
-Tempo Ingresso: {self.instrucoes[tempo]['ingressoTempo']} | Tempo Restante: {self.instrucoes[tempo]['duracaoRestante']}
-Duração Total: {self.instrucoes[tempo]['duracao']} | Prioridade: {self.instrucoes[tempo]['prioridade']} | Cor (índice): {self.instrucoes[tempo]['cor']}
+Tarefa: T{instrucao['id'] + 1}| Algoritmo: {self.algoritmo} | Quantum: {self.quantum} | Estado: {instrucao['estado']} 
+Tempo Ingresso: {instrucao['ingressoTempo']} | Tempo Restante: {instrucao['duracaoRestante']}
+Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} | Cor (índice): {instrucao['cor']}
 ────────────────────────────
 """
         AtualizarLog(self.logBox, info)
@@ -93,29 +92,59 @@ Duração Total: {self.instrucoes[tempo]['duracao']} | Prioridade: {self.instruc
     def AvancarPasso(self):       
         if self.tarefas and self.usarPasso:    
             if(self.tempoAtual < len(self.instrucoes)): 
-                self.barra, self.barraText = CriarBarra(
-                    self.canvasGantt, 
-                    self.graficoConfig, 
-                    self.tempoAtual, 
-                    self.maxTid, 
-                    self.instrucoes[self.tempoAtual]['id']-1, 
-                    self.instrucoes[self.tempoAtual]['cor']+1, 
-                    self.PegarInfoBarra)
-                self.barraID.append(
-                    {
-                        'barra' : self.barra,
-                        'barraText' : self.barraText
-                    }
-                )                
+                self.CriarBarras()
                 self.tempoAtual += 1                                
                 self.infoTempoAtual.set(f"Tempo: {self.tempoAtual}" )
                 WriteLockBox(self.tempoAtualEntry, self.tempoAtual)
                 
-    
+    def CriarBarras(self):
+        
+        self.barra, self.barraText = CriarBarra(
+                    self.canvasGantt, 
+                    self.graficoConfig, 
+                    self.instrucoes[self.tempoAtual], 
+                    self.maxTid, 
+
+                    self.PegarInfoBarra)
+        self.barraID.append(
+            {
+                'barra' : self.barra,
+                'barraText' : self.barraText,
+                'tempo' : self.tempoAtual
+            }
+        )
+
+        for i in range(len(self.instrucoesInativos)):
+            if self.instrucoesInativos[i]['ingressoTempo'] == self.tempoAtual:
+                self.barra, self.barraText = CriarBarra(
+                    self.canvasGantt, 
+                    self.graficoConfig, 
+                    self.instrucoesInativos[i], 
+                    self.maxTid, 
+
+                    self.PegarInfoBarra)
+                
+                self.barraID.append(
+                    {
+                        'barra' : self.barra,
+                        'barraText' : self.barraText,
+                        'tempo' : self.tempoAtual
+                    }
+                )
+
+    def ApagarBarras():
+        return 0
+
     def VoltarPasso(self):
         if self.tarefas and self.usarPasso:
-            if(self.tempoAtual > 0):                               
-                ApagarBarra(self.canvasGantt,self.barraID, self.tempoAtual-1)   
+            if(self.tempoAtual > 0):       
+                    
+                for i in range(len(self.barraID)):                    
+                    if self.barraID[i]['tempo'] == self.tempoAtual-1:                    
+                        ApagarBarra(self.canvasGantt,self.barraID[i]['barra'], self.barraID[i]['barraText'])
+
+                self.barraID = [t for t in self.barraID if t['tempo'] != self.tempoAtual-1]
+                
                 self.tempoAtual -=1  
                 self.infoTempoAtual.set(f"Tempo: {self.tempoAtual}" )
                 WriteLockBox(self.tempoAtualEntry, self.tempoAtual) 

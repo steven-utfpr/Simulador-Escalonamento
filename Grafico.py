@@ -10,24 +10,28 @@ cores = ['white', 'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 
 def GerarGrafico(canvasGantt, config, instrucoes, instrucoesInativas, maxTempo, maxTid, usarPasso, PegarInfoBarra=None):
     canvasGantt.delete("all")
     #ResetarValores(self)    
+    
     CriarBordas(canvasGantt, config, maxTempo, maxTid)
     CriarEixos(canvasGantt, config, maxTempo, maxTid)
     if not usarPasso:
         for instrucao in instrucoes:
-            CriarBarra(canvasGantt, config, instrucao['ingressoTempo'], maxTid, instrucao['id']-1, instrucao['cor'], PegarInfoBarra)
+            CriarBarra(canvasGantt, config, instrucao, maxTid, PegarInfoBarra)
             for instrucaoInativa in instrucoesInativas:
-                CriarBarra(canvasGantt, config, instrucaoInativa['ingressoTempo'], maxTid, instrucaoInativa['id']-1, instrucaoInativa['cor'], PegarInfoBarra)
+                CriarBarra(canvasGantt, config, instrucaoInativa, maxTid, PegarInfoBarra)
             
                    
 
-def ApagarBarra(canvasGantt, barra, tempoAtual):
-    canvasGantt.delete(barra[tempoAtual]['barra'])
-    canvasGantt.delete(barra[tempoAtual]['barraText'])
-    del barra[tempoAtual]
+def ApagarBarra(canvasGantt, barra, barraText):
+    canvasGantt.delete(barra)
+    canvasGantt.delete(barraText)
 
-def CriarBarra(canvasGantt,config, tempoAtual, maxTid, tidAtual, cor, PegarInfoBarra=None):
+def CriarBarra(canvasGantt,config, instrucao, maxTid, PegarInfoBarra=None):
     escalaX = config['escalaX']
     escalaY = config['escalaY']
+    tempoAtual = instrucao['ingressoTempo']
+    tidAtual = instrucao['id']-1
+    cor = instrucao['cor']
+
     xMin = escalaX * (tempoAtual+1) # Posição inicial no eixo X
     xMax = escalaX * (tempoAtual+1) + escalaX # Posição final no eixo X, fechando o retângulo criado no espaço de tempo
     yMin = (escalaY  * (maxTid - tidAtual)) + 5 # Posição inicial no eixo Y, utilizando id como multiplicador
@@ -47,9 +51,9 @@ def CriarBarra(canvasGantt,config, tempoAtual, maxTid, tidAtual, cor, PegarInfoB
     canvasGantt.tag_bind(rectTextID, "<Enter>", on_enter)
     canvasGantt.tag_bind(rectTextID, "<Leave>", on_leave)
 
-    if PegarInfoBarra is not None:
-        canvasGantt.tag_bind(rectID, "<Button-1>", lambda event: PegarInfoBarra(tid = tidAtual, tempo = tempoAtual))
-        canvasGantt.tag_bind(rectTextID, "<Button-1>", lambda event: PegarInfoBarra(tid = tidAtual, tempo = tempoAtual))
+    if PegarInfoBarra is not None:        
+        canvasGantt.tag_bind(rectID, "<Button-1>", lambda event, i=instrucao: PegarInfoBarra(i))
+        canvasGantt.tag_bind(rectTextID, "<Button-1>", lambda event, i=instrucao: PegarInfoBarra(i))
 
     return rectID, rectTextID
 
