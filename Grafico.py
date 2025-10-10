@@ -1,5 +1,4 @@
 import tkinter as tk
-import matplotlib.pyplot as plt
 
 from collections import deque
 from Funcoes import GerarInstrucoes, ResetarValores
@@ -87,19 +86,3 @@ def CriarEixos(canvasGantt, config, maxTempo, maxTid):
         canvasGantt.create_line(escalaX-10, (escalaY * (t +1))+15, escalaX, (escalaY * (t +1))+15, width=2)       
 
 
-def diagramTeste():
-    # Dados de exemplo
-    tarefas = ['T1', 'T2', 'T3']
-    inicio = [0, 2, 5]
-    duracao = [3, 4, 2]
-    cores = ['red', 'blue', 'green']
-
-    # Gera gráfico
-    plt.figure(figsize=(10, 4))
-    plt.barh(tarefas, duracao, left=inicio, color=cores, edgecolor='black')
-    plt.xlabel('Tempo')
-    plt.title('Gráfico de Gantt')
-
-    # Salva como imagem
-    plt.savefig('gantt.png', dpi=150, bbox_inches='tight')
-    plt.close()

@@ -10,7 +10,7 @@ def CriarInterface(self):
     # Titulo da janela
     janelaPrincipal.title("Simulador SO") 
     # Definindo o tamanho 
-    janelaPrincipal.geometry ("800x600")
+    janelaPrincipal.geometry ("1280x720")
 
     frameInfo, logBox = CriarTelaInfos(janelaPrincipal)
     frameConfig, tempoAtualEntry, arqAtualEntry = CriarTelaConfig(self,janelaPrincipal)
@@ -28,6 +28,7 @@ def CriarTelaConfig(self,root):
     # Conteúdo do painel esquerdo
     tituloConfig = tk.Label(frame, text="Configurações", font=("Arial", 12), bg="lightgray")
     btnIniciar = tk.Button(frame, text="Iniciar", command= self.IniciarSimulacao, bg="green", fg="white", width=10, height=2)
+    btnGerar = tk.Button(frame, text="Gerar IMG", command= self.SalvarDiagrama, bg="green", fg="white", width=10, height=2)
     tituloArqSel = tk.Label(frame, text="Arquivo Selecionado:", bg="lightgray")
     
     arqAtualEntry = tk.Entry(frame, width=20)
@@ -56,19 +57,20 @@ def CriarTelaConfig(self,root):
 
     tituloConfig.grid(row=0, column=0, padx=2, pady=5)
     btnIniciar.grid(row=1, column=0, padx=2, pady=5, )
-    tituloArqSel.grid(row=2, column=0, padx=2, pady=5)
-    arqAtualEntry.grid(row=3, column=0, padx=2, pady=5)
-    btnProcurar.grid(row=4, column=0, padx=1, pady=5) 
+    btnGerar.grid(row=2, column=0, padx=2, pady=5, )
+    tituloArqSel.grid(row=3, column=0, padx=2, pady=5)
+    arqAtualEntry.grid(row=4, column=0, padx=2, pady=5)
+    btnProcurar.grid(row=5, column=0, padx=1, pady=5) 
 
-    btnAvanc.grid(row=5, column=0, padx=2, pady=5, sticky="e")
-    btnVolta.grid(row=5, column=0, padx=2, pady=5, sticky="w")
-    campoTempoAtual.grid(row=5, column=0, padx=2, pady=5)    
-    checkboxPasso.grid(row=6, column=0, padx=2, pady=5)
+    btnAvanc.grid(row=6, column=0, padx=2, pady=5, sticky="e")
+    btnVolta.grid(row=6, column=0, padx=2, pady=5, sticky="w")
+    campoTempoAtual.grid(row=6, column=0, padx=2, pady=5)    
+    checkboxPasso.grid(row=7, column=0, padx=2, pady=5)
 
-    infoAlgo.grid(row=7, column=0, padx=2, pady=5)
-    infoQuantum.grid(row=8, column=0, padx=2, pady=5)
-    infoTempoAtual.grid(row=9, column=0, padx=2, pady=5)    
-    infoExtra.grid(row=10, column=0, padx=2, pady=5)  
+    infoAlgo.grid(row=8, column=0, padx=2, pady=5)
+    infoQuantum.grid(row=9, column=0, padx=2, pady=5)
+    infoTempoAtual.grid(row=10, column=0, padx=2, pady=5)    
+    infoExtra.grid(row=11, column=0, padx=2, pady=5)  
 
     return frame, campoTempoAtual, arqAtualEntry
 

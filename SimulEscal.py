@@ -12,15 +12,17 @@
 #|  - Iniciado...                                          |
 #|  - Tarefa 1 executou...                                 |
 #+----------------------------------------------------------+
+
 import sys
 import json
 import ast
 import struct
 
+import matplotlib.pyplot as plt
 import tkinter as tk
 from Janelas import CriarInterface
 from Funcoes import LerArquivo, SelArquivo, WriteLockBox, GerarInstrucoes,ProcessarDados, AtualizarLog,DefinirScrollGantt
-from Grafico import GerarGrafico, CriarBarra, ApagarBarra
+from Grafico import GerarGrafico, CriarBarra, ApagarBarra, cores
 from Algoritmos import FIFO, SRTF, PrioP
 
 class SimulEscal:
@@ -38,6 +40,7 @@ class SimulEscal:
 
         self.root, self.frameInfo, self.logBox, self.frameConfig, self.frameGantt, self.canvasGantt, self.tempoAtualEntry,  self.arqAtualEntry = CriarInterface(self)
         
+        print(cores[1])
             
         if self.root:            
             self.root.mainloop()
@@ -57,6 +60,7 @@ class SimulEscal:
         DefinirScrollGantt(self.canvasGantt, self.graficoConfig, self.maxTempo, self.maxTid)
         
         GerarGrafico(self.canvasGantt, self.graficoConfig, self.instrucoes, self.instrucoesInativos, self.maxTempo, self.maxTid, self.usarPasso, self.PegarInfoBarra)
+        
         self.AtualizarInfos()
 
     def AtualizarInfos(self):
@@ -154,6 +158,43 @@ Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} 
                 self.infoTempoAtual.set(f"Tempo: {self.tempoAtual}" )
                 WriteLockBox(self.tempoAtualEntry, self.tempoAtual) 
     
+    def SalvarDiagrama(self):
+        self.IniciarSimulacao()
+        self.instrucoesUnidas = self.instrucoes + self.instrucoesInativos
+        # Dados de exemplo
+        tarefas = []
+        inicio = []
+        duracao = []
+        tCores = []
+
+        totalTarefas = len(self.tarefas)
+        tempoMax = len(self.instrucoes)
+
+        self.instrucoesUnidas = sorted(self.instrucoesUnidas, key=lambda x:x['id'])
+
+        for i in range(len(self.instrucoesUnidas)):
+            tarefas.append(f"T{self.instrucoesUnidas[i]['id']}")
+            duracao.append(1)
+            inicio.append(self.instrucoesUnidas[i]['ingressoTempo'])
+            tCores.append(cores[self.instrucoesUnidas[i]['cor']])
+        
+        fig, ax = plt.subplots(figsize=(tempoMax, totalTarefas))
+
+        # Gera gráfico
+        ax.barh(tarefas, duracao, left=inicio, color=tCores, edgecolor='black')
+        
+        for i in range(len(tarefas)):
+            ax.text(inicio[i] + duracao[i]/2, tarefas[i], f"T{self.instrucoesUnidas[i]['id']}", va='center', ha='center', color='black', fontweight='bold', fontsize=9)
+        
+        plt.xlim(0,tempoMax) # Remove o vão que ficaria na geração da imagem no último tempo
+        plt.xticks(range(0,tempoMax+1)) # Faz com que o gráfico mostre todos os números no eixo do tempo ao invés de 2 em 2
+        plt.xlabel('Tempo')
+        plt.title(f"Gráfico de Gantt: {self.algoritmo}")
+
+        # Salva como imagem
+        plt.savefig('gantt.png', dpi=150, bbox_inches='tight')
+        plt.close()
+
 simulador = SimulEscal()
         
 
