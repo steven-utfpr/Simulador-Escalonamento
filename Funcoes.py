@@ -34,20 +34,21 @@ def GerarInstrucoes(algoritmo, tarefas, quantum):
         )       
         
         if listaInativos:
-            for u in range(len(listaInativos)):
-                instrucoesInativas.append (
+            for u in range(len(listaInativos)):                
+                    instrucoesInativas.append (
                     CriarDadosInstrucao(listaInativos[u], i,True)
-                )
+                    )
 
     return instrucoes, instrucoesInativas
+
 
 def CriarDadosInstrucao(instrucao, tempoIngresso, inativo):
     if inativo:
         cor = 0
-        estado = "Inativo"
+        estado = False
     else:
         cor = instrucao['cor']  
-        estado = "Em Execução"
+        estado = True
     
     return{
         'nome': instrucao['nome'],
