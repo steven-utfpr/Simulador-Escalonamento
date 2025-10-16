@@ -41,9 +41,9 @@ def GerarInstrucoes(algoritmo, tarefas, quantum):
 
         if listaInativos:
             for u in range(len(listaInativos)):                
-                    instrucoesInativas.append (
-                    CriarDadosInstrucao(listaInativos[u], i,True,quantumCount)
-                    )
+                instrucoesInativas.append (
+                CriarDadosInstrucao(listaInativos[u], i,True,quantumCount)
+                )
 
     return instrucoes, instrucoesInativas
 

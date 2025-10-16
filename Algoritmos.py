@@ -9,10 +9,9 @@ import struct
 def FIFO(tarefas, tempoAtual, instrucaoAnterior=None):
     for i in range(len(tarefas)):
         tarefasInativas = PegarTarefasInativas(tarefas, tarefas[i], tempoAtual)   
-        if ChecarDuracao(tarefas[i]):
-            tarefa = PegarTarefaCorreta(tarefas[i], instrucaoAnterior)            
-            return tarefa, tarefasInativas
-            
+        if ChecarDuracao(tarefas[i]):            
+            tarefa = PegarTarefaCorreta(tarefas[i], instrucaoAnterior)
+            return tarefa, tarefasInativas 
 
 def SRTF(tarefas, tempoAtual, quantum):
     ingressados = []
@@ -37,20 +36,15 @@ def PrioP(tarefas, tempoAtual, quantum):
     tarefasInativas = PegarTarefasInativas(tarefas, maiorPrioridade, tempoAtual)
     
     return maiorPrioridade, tarefasInativas
-
-
     
 def PegarTarefaCorreta(tarefa, tarefaAnterior):
     if tarefaAnterior != None:
         if tarefa['id'] == tarefaAnterior['id'] and ChecarQuantum(tarefaAnterior):
-            return tarefaAnterior
-        elif tarefa['id'] != tarefaAnterior['id'] and not ChecarQuantum(tarefaAnterior):
-            return tarefa       
-    else:
-        return tarefa
+            return tarefaAnterior    
+    return tarefa
     
 def ChecarQuantum(instrucaoAnterior):
-    return True if instrucaoAnterior['quantumRestante'] >= 1 else False
+    return True if instrucaoAnterior['quantumRestante'] > 0 else False
 
 def ChecarDuracao(tarefa):    
     return tarefa['duracaoRestante'] > 0
