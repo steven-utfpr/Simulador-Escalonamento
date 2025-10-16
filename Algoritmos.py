@@ -6,11 +6,13 @@ import struct
 # INVERTER A LÓGICA: COMEÇAR GERANDO TAREFAS PRONTAS E ENVIAR PARA ANALISE PARA DETERMINAR QUAL A PROXIMA TAREFA
 # ATUALMENTE: CRIA UMA LISTA PRONTA PARA GERAR AS BARRAS, PROBLEMAS COM ALGORITMOS PREEMPTIVOS
 
-def FIFO(tarefas, tempoAtual, quantum):
+def FIFO(tarefas, tempoAtual, instrucaoAnterior=None):
     for i in range(len(tarefas)):
         tarefasInativas = PegarTarefasInativas(tarefas, tarefas[i], tempoAtual)   
         if ChecarDuracao(tarefas[i]):
-            return tarefas[i], tarefasInativas
+            tarefa = PegarTarefaCorreta(tarefas[i], instrucaoAnterior)            
+            return tarefa, tarefasInativas
+            
 
 def SRTF(tarefas, tempoAtual, quantum):
     ingressados = []
@@ -36,10 +38,19 @@ def PrioP(tarefas, tempoAtual, quantum):
     
     return maiorPrioridade, tarefasInativas
 
-def ChecarQuantum(quantum):
-    if quantum > 0:
-        return True
-    return False
+
+    
+def PegarTarefaCorreta(tarefa, tarefaAnterior):
+    if tarefaAnterior != None:
+        if tarefa['id'] == tarefaAnterior['id'] and ChecarQuantum(tarefaAnterior):
+            return tarefaAnterior
+        elif tarefa['id'] != tarefaAnterior['id'] and not ChecarQuantum(tarefaAnterior):
+            return tarefa       
+    else:
+        return tarefa
+    
+def ChecarQuantum(instrucaoAnterior):
+    return True if instrucaoAnterior['quantumRestante'] >= 1 else False
 
 def ChecarDuracao(tarefa):    
     return tarefa['duracaoRestante'] > 0

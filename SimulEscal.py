@@ -39,9 +39,7 @@ class SimulEscal:
         }
 
         self.root, self.frameInfo, self.logBox, self.frameConfig, self.frameGantt, self.canvasGantt, self.tempoAtualEntry,  self.arqAtualEntry = CriarInterface(self)
-        
-        print(cores[1])
-            
+                    
         if self.root:            
             self.root.mainloop()
 
@@ -92,7 +90,7 @@ class SimulEscal:
    DETALHES DA TAREFA
 ────────────────────────────
 Tarefa: T{instrucao['id'] + 1}| Algoritmo: {self.algoritmo} | Quantum: {self.quantum} | Estado: {estado} 
-Tempo Ingresso: {instrucao['ingressoTempo']} | Tempo Restante: {instrucao['duracaoRestante']}
+Tempo Ingresso: {instrucao['ingressoTempo']} | Tempo Restante: {instrucao['duracaoRestante']} | Quantum Restante: {instrucao['quantumRestante']}
 Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} | Cor (índice): {instrucao['cor']}
 ────────────────────────────
 """

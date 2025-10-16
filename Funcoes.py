@@ -17,7 +17,8 @@ def SelArquivo(arqSel):
 def GerarInstrucoes(algoritmo, tarefas, quantum):
     instrucoes = []
     instrucoesInativas = []
-    count = quantum
+    instrucaoAnterior = None
+    quantumCount = quantum-1
     tempoMax = DuracaoTotal(tarefas)
     tarefas = sorted(tarefas, key=lambda x: x['ingressoTarefa'])
     algoritimos = {
@@ -26,26 +27,28 @@ def GerarInstrucoes(algoritmo, tarefas, quantum):
         "PrioP": PrioP
     }
     for i in range(tempoMax):
-        instrucao, listaInativos =algoritimos[algoritmo](tarefas, i, count)
+        instrucao, listaInativos =algoritimos[algoritmo](tarefas, i, instrucaoAnterior)
+        
         tarefas[PegarUltimaTarefa(tarefas,instrucao)]['duracaoRestante']-=1
         tarefas[PegarUltimaTarefa(tarefas,instrucao)]['ingressoTempo'] = i
-        instrucoes.append(       
-           CriarDadosInstrucao(instrucao, i,False)           
-        )       
-        count -=1
-        if count <= 0:
-            count = quantum
+
+        instrucaoAnterior = CriarDadosInstrucao(instrucao, i,False,quantumCount)  
+        instrucoes.append(instrucaoAnterior)     
+
+        quantumCount -=1
+        if quantumCount < 0:
+            quantumCount = quantum
 
         if listaInativos:
             for u in range(len(listaInativos)):                
                     instrucoesInativas.append (
-                    CriarDadosInstrucao(listaInativos[u], i,True)
+                    CriarDadosInstrucao(listaInativos[u], i,True,quantumCount)
                     )
 
     return instrucoes, instrucoesInativas
 
 
-def CriarDadosInstrucao(instrucao, tempoIngresso, inativo):
+def CriarDadosInstrucao(instrucao, tempoIngresso, inativo,quantumCount):
     if inativo:
         cor = 0
         estado = False
@@ -61,6 +64,7 @@ def CriarDadosInstrucao(instrucao, tempoIngresso, inativo):
         'ingressoTempo': tempoIngresso, 
         'duracao': instrucao['duracao'], 
         'duracaoRestante': instrucao['duracaoRestante'], 
+        'quantumRestante': quantumCount,
         'prioridade': instrucao['prioridade'], 
         'estado': estado,
         'eventos': instrucao['eventos']
