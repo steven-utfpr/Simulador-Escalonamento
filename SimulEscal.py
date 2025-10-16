@@ -69,7 +69,7 @@ class SimulEscal:
 
     def UsarConfigPadrao(self):
         tarefas = []
-        configPadrao = 'PrioP;2\n', 't01;0;0;5;2;\n', 't02;1;0;2;3;\n', 't03;2;1;4;1;\n', 't04;3;3;1;4;\n', 't05;4;5;2;5;\n'
+        configPadrao = 'FIFO;2\n', 't01;0;0;5;2;\n', 't02;1;0;2;3;\n', 't03;2;1;4;1;\n', 't04;3;3;1;4;\n', 't05;4;5;2;5;\n'
         tarefas, algoritmo, quantum = ProcessarDados(configPadrao)
        
         return tarefas, algoritmo, quantum

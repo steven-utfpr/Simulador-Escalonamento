@@ -26,13 +26,16 @@ def GerarInstrucoes(algoritmo, tarefas, quantum):
         "PrioP": PrioP
     }
     for i in range(tempoMax):
-        instrucao, listaInativos =algoritimos[algoritmo](tarefas, i)
+        instrucao, listaInativos =algoritimos[algoritmo](tarefas, i, count)
         tarefas[PegarUltimaTarefa(tarefas,instrucao)]['duracaoRestante']-=1
         tarefas[PegarUltimaTarefa(tarefas,instrucao)]['ingressoTempo'] = i
         instrucoes.append(       
            CriarDadosInstrucao(instrucao, i,False)           
         )       
-        
+        count -=1
+        if count <= 0:
+            count = quantum
+
         if listaInativos:
             for u in range(len(listaInativos)):                
                     instrucoesInativas.append (
