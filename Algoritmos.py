@@ -7,11 +7,19 @@ import struct
 # ATUALMENTE: CRIA UMA LISTA PRONTA PARA GERAR AS BARRAS, PROBLEMAS COM ALGORITMOS PREEMPTIVOS
 
 def FIFO(tarefas, tempoAtual, instrucaoAnterior=None):
+    tarefaPronta = None
     for i in range(len(tarefas)):
-        tarefasInativas = PegarTarefasInativas(tarefas, tarefas[i], tempoAtual)   
-        if ChecarDuracao(tarefas[i]):            
-            tarefa = PegarTarefaCorreta(tarefas[i], instrucaoAnterior)
-            return tarefa, tarefasInativas 
+        tarefasInativas = PegarTarefasInativas(tarefas, tarefas[i], tempoAtual)  
+        if instrucaoAnterior == None: 
+            if ChecarDuracao(tarefas[i]) and ChecarIngresso(tarefas[i], tempoAtual):           
+                tarefaPronta = tarefas[i]
+                return tarefaPronta, tarefasInativas
+        elif ChecarQuantum(instrucaoAnterior) == False:
+            for i in range(len(tarefas)):
+                if ChecarDuracao(tarefas[i]) and tarefas[i]['id'] != instrucaoAnterior['id']:
+                    return tarefas[i], tarefasInativas
+                           
+    return tarefaPronta, tarefasInativas
 
 def SRTF(tarefas, tempoAtual, quantum):
     ingressados = []
@@ -40,7 +48,7 @@ def PrioP(tarefas, tempoAtual, quantum):
 def PegarTarefaCorreta(tarefa, tarefaAnterior):
     if tarefaAnterior != None:
         if tarefa['id'] == tarefaAnterior['id'] and ChecarQuantum(tarefaAnterior):
-            return tarefaAnterior    
+            return tarefaAnterior
     return tarefa
     
 def ChecarQuantum(instrucaoAnterior):
@@ -51,6 +59,9 @@ def ChecarDuracao(tarefa):
 
 def ChecarIngresso(tarefa, tempoAtual):
     return tarefa['ingressoTarefa'] <= tempoAtual
+
+def PegarMenorIngresso(tarefa1, tarefa2):
+    return tarefa1 if tarefa1['ingressoTarefa'] < tarefa2['ingressoTarefa'] else tarefa2
 
 def CompararDuracao(tarefa1, tarefa2):
     return tarefa1 if tarefa1['duracaoRestante'] < tarefa2['duracaoRestante'] else tarefa2
