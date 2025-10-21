@@ -90,7 +90,7 @@ class SimulEscal:
    DETALHES DA TAREFA
 ────────────────────────────
 Tarefa: T{instrucao['id'] + 1}| Algoritmo: {self.algoritmo} | Quantum: {self.quantum} | Estado: {estado} 
-Tempo Ingresso: {instrucao['ingressoTempo']} | Tempo Restante: {instrucao['duracaoRestante']} | Quantum Restante: {instrucao['quantumRestante']}
+Tempo Ingresso: {instrucao['ingressoTempo']} | Tempo Processado: {instrucao['duracaoRestante']} | Quantum Restante: {instrucao['quantumRestante']}
 Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} | Cor (índice): {instrucao['cor']}
 ────────────────────────────
 """

@@ -17,45 +17,38 @@ def SelArquivo(arqSel):
 def GerarInstrucoes(algoritmo, tarefas, quantum):
     instrucoes = []
     instrucoesInativas = []
-    instrucaoAnterior = None
-    quantumCount = quantum-1
+    ultimaInstrucao = None
+    quantumCount = quantum
     tempoMax = DuracaoTotal(tarefas)
-    tarefas = sorted(tarefas, key=lambda x: x['ingressoTarefa'])
     algoritimos = {
         "FIFO": FIFO,
         "SRTF": SRTF,
         "PrioP": PrioP
-    }
-    for i in range(tempoMax):
-        instrucao, listaInativos =algoritimos[algoritmo](tarefas, i, instrucaoAnterior)
-        
-        tarefas[PegarUltimaTarefa(tarefas,instrucao)]['duracaoRestante']-=1
-        tarefas[PegarUltimaTarefa(tarefas,instrucao)]['ingressoTempo'] = i
+    }  
 
-        instrucaoAnterior = CriarDadosInstrucao(instrucao, i,False,quantumCount)  
-        instrucoes.append(instrucaoAnterior)     
+    instrucoesBrutas, listaInativos = algoritimos[algoritmo](tarefas,tempoMax, 2)   
 
-        quantumCount -=1
-        if quantumCount < 0:
-            quantumCount = quantum
+    for i in range(len(instrucoesBrutas)):             
+        instrucoes.append(CriarDadosInstrucao(instrucoesBrutas[i], i,False,quantumCount))
+        quantumCount = (quantumCount-1) % quantum
 
-        if listaInativos:
-            for u in range(len(listaInativos)):                
-                instrucoesInativas.append (
-                CriarDadosInstrucao(listaInativos[u], i,True,quantumCount)
-                )
+        #if listaInativos:
+        #    for u in range(len(listaInativos)):                
+        #        instrucoesInativas.append (
+        #        CriarDadosInstrucao(listaInativos[u], i,True,quantumCount)
+        #        )
 
     return instrucoes, instrucoesInativas
 
 
-def CriarDadosInstrucao(instrucao, tempoIngresso, inativo,quantumCount):
+def CriarDadosInstrucao(instrucao, tempoIngresso, inativo,quantumCount):    
     if inativo:
         cor = 0
         estado = False
     else:
         cor = instrucao['cor']  
         estado = True
-    
+    instrucao['duracaoRestante'] += 1
     return{
         'nome': instrucao['nome'],
         'id': instrucao['id'], 
@@ -68,7 +61,7 @@ def CriarDadosInstrucao(instrucao, tempoIngresso, inativo,quantumCount):
         'prioridade': instrucao['prioridade'], 
         'estado': estado,
         'eventos': instrucao['eventos']
-        }
+        }   
 
 def DuracaoTotal(tarefas):
     count = 0

@@ -6,20 +6,29 @@ import struct
 # INVERTER A LÓGICA: COMEÇAR GERANDO TAREFAS PRONTAS E ENVIAR PARA ANALISE PARA DETERMINAR QUAL A PROXIMA TAREFA
 # ATUALMENTE: CRIA UMA LISTA PRONTA PARA GERAR AS BARRAS, PROBLEMAS COM ALGORITMOS PREEMPTIVOS
 
-def FIFO(tarefas, tempoAtual, instrucaoAnterior=None):
-    tarefaPronta = None
-    for i in range(len(tarefas)):
-        tarefasInativas = PegarTarefasInativas(tarefas, tarefas[i], tempoAtual)  
-        if instrucaoAnterior == None: 
-            if ChecarDuracao(tarefas[i]) and ChecarIngresso(tarefas[i], tempoAtual):           
-                tarefaPronta = tarefas[i]
-                return tarefaPronta, tarefasInativas
-        elif ChecarQuantum(instrucaoAnterior) == False:
-            for i in range(len(tarefas)):
-                if ChecarDuracao(tarefas[i]) and tarefas[i]['id'] != instrucaoAnterior['id']:
-                    return tarefas[i], tarefasInativas
-                           
-    return tarefaPronta, tarefasInativas
+def FIFO(tarefas, tempoMax, quantum):  
+    copiaTarefas = tarefas.copy()
+    tempoAtual = 0
+    instrucoes = []
+    tarefasProntas = []
+    while (tempoAtual < tempoMax):
+        tarefasProntas = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual)
+
+        for i in range(quantum):
+            if ChecarDuracao(tarefasProntas[0]):                
+                instrucoes.append(tarefasProntas[0])
+                tarefasProntas[0]['duracaoRestante'] -= 1
+                tempoAtual+=1
+        tarefasProntas.pop(0)
+
+    return instrucoes, None
+        
+def PegarTarefasProntas(tarefas, tarefasProntas, tempoAtual):
+    prontas = tarefasProntas.copy()
+    for i in range (len(tarefas)):
+        if ChecarIngresso(tarefas[i], tempoAtual) and ChecarDuracao(tarefas[i]) :
+            prontas.append(tarefas[i])
+    return prontas
 
 def SRTF(tarefas, tempoAtual, quantum):
     ingressados = []
@@ -44,13 +53,7 @@ def PrioP(tarefas, tempoAtual, quantum):
     tarefasInativas = PegarTarefasInativas(tarefas, maiorPrioridade, tempoAtual)
     
     return maiorPrioridade, tarefasInativas
-    
-def PegarTarefaCorreta(tarefa, tarefaAnterior):
-    if tarefaAnterior != None:
-        if tarefa['id'] == tarefaAnterior['id'] and ChecarQuantum(tarefaAnterior):
-            return tarefaAnterior
-    return tarefa
-    
+
 def ChecarQuantum(instrucaoAnterior):
     return True if instrucaoAnterior['quantumRestante'] > 0 else False
 

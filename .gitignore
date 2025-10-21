@@ -1,0 +1,16 @@
+# Pastas e arquivos de cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Arquivos de IDE
+.vscode/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs e saídas geradas
+*.log
+gantt.png
