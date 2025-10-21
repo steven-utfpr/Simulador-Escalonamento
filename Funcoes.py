@@ -26,17 +26,22 @@ def GerarInstrucoes(algoritmo, tarefas, quantum):
         "PrioP": PrioP
     }  
 
-    instrucoesBrutas, listaInativos = algoritimos[algoritmo](tarefas,tempoMax, 2)   
+    instrucoesBrutas, listaInativos = algoritimos[algoritmo](tarefas,tempoMax, quantum)   
 
     for i in range(len(instrucoesBrutas)):             
         instrucoes.append(CriarDadosInstrucao(instrucoesBrutas[i], i,False,quantumCount))
         quantumCount = (quantumCount-1) % quantum
 
-        #if listaInativos:
-        #    for u in range(len(listaInativos)):                
-        #        instrucoesInativas.append (
-        #        CriarDadosInstrucao(listaInativos[u], i,True,quantumCount)
-        #        )
+    #for instr in instrucoes:
+        #print(instr)
+    #print("-------------")
+
+    #for inativo in listaInativos:
+    #    print(inativo)
+
+    if listaInativos:
+       for i in range(len(listaInativos)):                
+           instrucoesInativas.append (CriarDadosInstrucao(listaInativos[i], listaInativos[i]['ingressoTempo'],True,quantumCount) )
 
     return instrucoes, instrucoesInativas
 
@@ -45,10 +50,13 @@ def CriarDadosInstrucao(instrucao, tempoIngresso, inativo,quantumCount):
     if inativo:
         cor = 0
         estado = False
+        instrucao['duracaoRestante'] = "---"
     else:
         cor = instrucao['cor']  
         estado = True
-    instrucao['duracaoRestante'] += 1
+        instrucao['duracaoRestante'] += 1   
+
+
     return{
         'nome': instrucao['nome'],
         'id': instrucao['id'], 

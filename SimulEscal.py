@@ -81,6 +81,7 @@ class SimulEscal:
         self.IniciarSimulacao()
 
     def PegarInfoBarra(self,instrucao):
+        
         if instrucao['estado']:
             estado = "Em Execução"
         else:
