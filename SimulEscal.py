@@ -14,19 +14,14 @@
 #+----------------------------------------------------------+
 #. COMENTAR O CÓDIGO E FAZER DOCUMENTAÇÃO
 
-import sys
-import json
-import ast
-import struct
-
 import matplotlib.pyplot as plt
 import tkinter as tk
 from Janelas import CriarInterface
 from Funcoes import LerArquivo, SelArquivo, WriteLockBox, GerarInstrucoes,ProcessarDados, AtualizarLog,DefinirScrollGantt
 from Grafico import GerarGrafico, CriarBarra, ApagarBarra, cores
-from Algoritmos import FIFO, SRTF, PrioP
 
 
+# Main
 class SimulEscal:
     def __init__(self):
         self.usarPasso = False # Variável para controlar o modo passo a passo
