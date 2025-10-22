@@ -1,25 +1,7 @@
-#+----------------------+----------------------------------+
-#|  [CONFIGURAÇÕES]     |                                  |
-#|                      |                                  |
-#|  Algoritmo: [▼]      |                                  |
-#|  Arquivo:   [_____]  |                                  |
-#|  [ Iniciar]        |       ÁREA DO GRÁFICO DE        |
-#|                      |            GANTT                 |
-#|                      |                                  |
-#|                      |                                  |
-#+----------------------+----------------------------------+
-#|                   LOG DA SIMULAÇÃO                      |
-#|  - Iniciado...                                          |
-#|  - Tarefa 1 executou...                                 |
-#+----------------------------------------------------------+
-#. COMENTAR O CÓDIGO E FAZER DOCUMENTAÇÃO
-
 import matplotlib.pyplot as plt
-import tkinter as tk
 from Janelas import CriarInterface
 from Funcoes import LerArquivo, SelArquivo, WriteLockBox, GerarInstrucoes,ProcessarDados, AtualizarLog,DefinirScrollGantt
 from Grafico import GerarGrafico, CriarBarra, ApagarBarra, cores
-
 
 # Main
 class SimulEscal:
