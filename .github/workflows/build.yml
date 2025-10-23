@@ -1,7 +1,7 @@
 name: Build Executables for Windows, Linux, and macOS
 
 on:
-  workflow_dispatch:  # Permite executar manualmente
+  workflow_dispatch:
 
 jobs:
   build:
@@ -28,13 +28,15 @@ jobs:
 
       - name: Rename executable for clarity
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            mv dist/SimulEscal.exe dist/SimulEscal-windows.exe
-          elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          $os = "${{ matrix.os }}"
+          if ($os -eq "windows-latest") {
+            Move-Item -Path dist\SimulEscal.exe -Destination dist\SimulEscal-windows.exe
+          } elseif ($os -eq "ubuntu-latest") {
             mv dist/SimulEscal dist/SimulEscal-linux
-          else
+          } else {
             mv dist/SimulEscal dist/SimulEscal-macos
-          fi
+          }
+        shell: pwsh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
