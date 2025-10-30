@@ -10,8 +10,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install pyinstaller matplotlib
-      - run: pyinstaller --onefile SimulEscal.py
+      - run: pip install pyinstaller matplotlib pillow
+        # *Adicionei 'pillow' explicitamente, embora seja dependência do matplotlib, é bom garantir.*
+      
+      - name: Build Executable with Hidden Import
+        run: pyinstaller --onefile --hidden-import PIL.ImageTk SimulEscal.py
+        # ↑↑↑ ESSA É A LINHA CRÍTICA AJUSTADA ↑↑↑
+
       - uses: actions/upload-artifact@v4
         with:
           name: simulador-linux-compativel
