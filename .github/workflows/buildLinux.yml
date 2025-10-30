@@ -4,18 +4,19 @@ on: [workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04  # ← Mude de ubuntu-latest para ubuntu-22.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install pyinstaller matplotlib pillow
-        # *Adicionei 'pillow' explicitamente, embora seja dependência do matplotlib, é bom garantir.*
       
-      - name: Build Executable with Hidden Import
-        run: pyinstaller --onefile --hidden-import PIL.ImageTk SimulEscal.py
-        # ↑↑↑ ESSA É A LINHA CRÍTICA AJUSTADA ↑↑↑
+      # Garante a instalação das bibliotecas principais
+      - run: pip install pyinstaller matplotlib pillow
+      
+      # Comando PyInstaller aprimorado para lidar com dependências de GUI (Tkinter/Pillow)
+      - name: Build Executable with Hidden Imports and Collect Data
+        run: pyinstaller --onefile --hidden-import PIL.ImageTk --collect-all matplotlib --collect-data PIL SimulEscal.py
 
       - uses: actions/upload-artifact@v4
         with:
