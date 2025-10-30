@@ -14,9 +14,9 @@ jobs:
       # Garante a instalação das bibliotecas principais
       - run: pip install pyinstaller matplotlib pillow
       
-      # Comando PyInstaller aprimorado para lidar com dependências de GUI (Tkinter/Pillow)
-      - name: Build Executable with Hidden Imports and Collect Data
-        run: pyinstaller --onefile --hidden-import PIL.ImageTk --collect-all matplotlib --collect-data PIL SimulEscal.py
+      # Comando PyInstaller aprimorado: Usando --collect-all para matplotlib E PIL
+      - name: Build Executable with Full Collection
+        run: pyinstaller --onefile --hidden-import PIL.ImageTk --collect-all matplotlib --collect-all PIL SimulEscal.py
 
       - uses: actions/upload-artifact@v4
         with:
