@@ -3,6 +3,16 @@ from Janelas import CriarInterface
 from Funcoes import LerArquivo, SelArquivo, WriteLockBox, GerarInstrucoes,ProcessarDados, AtualizarLog,DefinirScrollGantt
 from Grafico import GerarGrafico, CriarBarra, ApagarBarra, cores
 
+# ERROS NO PROJETO:
+# AO COLOCAR UM VALOR ALTO NO INGRESSO DE UMA TAREFA ELE DA ERRO
+# CODIGO NÃO É MODULAVEL E NÃO É POSSIVEL ADICIONAR NOVOS ALGORITMOS SEM EDITAR O CODIGO FONTE, SOLUÇÃO: TORNAR A ESCOLHA GULOSA SELECIONAVEL A PARTIR DE UM CONFIG .TXT
+# NOMEAÇÃO ERRADA NO LOG DAS BARRAS ESTÁ EM +1
+# IDENTIFICAR O TIPO DE VARIAVEL USADA PARA ARMAZENAR AS "INSTRUÇÕES" DAS TAREFAS, E ENCONTRAR UM NOME DECENTE PRA ELE
+# ARRUMAR A NOMEAÇÃO DAS COISAS QUE APARECEM NO LOG E PROCURAR OS TERMOS CORRETOS ENVOLVENDO TUDO SOBRE O ESCALONADORES
+# DEIXAR CLARO A PASSAGEM DE TEMPO
+# PROBLEMA DE ESCALABILIDADE SE USAR MUITAS TAREFAS O CONTEUDO EM "INSTRUÇÕES AUMENTARA MUITO
+# REFATORAR O CÓDIGO E DEIXAR ELE MAIS ENXUTO
+
 # Main
 class SimulEscal:
     def __init__(self):
@@ -41,15 +51,15 @@ class SimulEscal:
         # Verifica se um arquivo .txt de configuração foi selecionado
         if self.caminhoArq is not None:
             texto = LerArquivo(self.caminhoArq) # Lê o conteúdo do arquivo selecionado
-            self.tarefas, self.algoritmo, self.quantum = ProcessarDados(texto) # Processa os dados do arquivo para obter as tarefas, algoritmo e quantum
+            self.tarefas, self.algoritmo, self.quantum, self.alpha = ProcessarDados(texto) # Processa os dados do arquivo para obter as tarefas, algoritmo e quantum
         # Caso nenhum arquivo tenha sido selecionado, utiliza uma configuração padrão
         else:
-            self.tarefas, self.algoritmo, self.quantum = self.UsarConfigPadrao() # Usa configuração padrão        
+            self.tarefas, self.algoritmo, self.quantum, self.alpha = self.UsarConfigPadrao() # Usa configuração padrão        
 
         # instruções = lista contendo o passo a passo para gerar no gráfico de Gantt        
         # maxTempo = duração total da simulação, utilizado para definir o tamanho horizontal do gráfico e o scroll caso necessário
         # maxTid = número máximo de tarefas, utilizado para definir o tamanho vertical do gráfico e o scroll
-        self.instrucoes, self.instrucoesInativos = GerarInstrucoes(self.algoritmo, self.tarefas, self.quantum) # Gera as instruções de simulação com base nas tarefas, algoritmo e quantum selecionados
+        self.instrucoes, self.instrucoesInativos = GerarInstrucoes(self.algoritmo, self.tarefas, self.quantum, self.alpha) # Gera as instruções de simulação com base nas tarefas, algoritmo e quantum selecionados
         self.maxTempo = len(self.instrucoes) 
         self.maxTid = len(self.tarefas)
         DefinirScrollGantt(self.canvasGantt, self.graficoConfig, self.maxTempo, self.maxTid) # Define as configurações de scroll para o gráfico de Gantt
@@ -67,11 +77,11 @@ class SimulEscal:
     # Função contendo as configurações padrão, caso não seja selecionado um .txt para simular
     def UsarConfigPadrao(self):
         tarefas = [] # Variável para armazenar o conteudos das tarefas: prioridade, duracao, ingresso
-        configPadrao = 'SRTF;2\n', 't01;0;0;5;2;\n', 't02;1;0;2;3;\n', 't03;2;1;4;1;\n', 't04;3;3;1;4;\n', 't05;4;5;2;5;\n' # String contendo as configurações padrão
+        configPadrao = 'SRTF;2;1\n', 't01;0;0;5;2;\n', 't02;1;0;2;3;\n', 't03;2;1;4;1;\n', 't04;3;3;1;4;\n', 't05;4;5;2;5;\n' # String contendo as configurações padrão
         # OBS: os valores são os mesmo presente no Capítulo 6 do pdf do Carlos Maziero, Página 73
-        tarefas, algoritmo, quantum = ProcessarDados(configPadrao)
+        tarefas, algoritmo, quantum, alpha = ProcessarDados(configPadrao)
        
-        return tarefas, algoritmo, quantum
+        return tarefas, algoritmo, quantum, alpha
 
     # Pega o caminho onde está localizado o arquivo .txt utilizando uma função em Funcoes.py
     def PegarCaminho(self):
@@ -95,7 +105,7 @@ class SimulEscal:
         info = f"""\
    DETALHES DA TAREFA
 ────────────────────────────
-Tarefa: T{instrucao['id'] + 1}| Algoritmo: {self.algoritmo} | Quantum: {self.quantum} | Estado: {estado} 
+Tarefa: T{instrucao['id'] }| Algoritmo: {self.algoritmo} | Quantum: {self.quantum} | Estado: {estado} 
 Tempo Ingresso: {instrucao['ingressoTempo']} | Tempo Processado: {instrucao['duracaoRestante']}
 Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} | Cor (índice): {instrucao['cor']}
 ────────────────────────────

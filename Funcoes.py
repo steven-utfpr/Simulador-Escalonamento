@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 import os
 
-from Algoritmos import FIFO, SRTF, PrioP
+from Algoritmos import FIFO, SRTF, PrioP, PrioEnv
 
 # Função para pegar o caminho do arquivo selecionado
 def SelArquivo(arqSel):        
@@ -18,7 +18,7 @@ def SelArquivo(arqSel):
         return caminho # Retorna o caminho
     
 # Funcao para gerar as instrucoes utilizadas para montar o gráfico
-def GerarInstrucoes(algoritmo, tarefas, quantum):
+def GerarInstrucoes(algoritmo, tarefas, quantum, alpha):
     instrucoes = [] # Variavel para armazenar as instrucoes para criar cada bloco
     instrucoesInativas = [] # Variavel para armazenar as instrucoes para criar os blocos representando as tarefas inativas
     tempoMax = DuracaoTotal(tarefas) # Calcula o tempo máximo da simulação a partir da lista de tarefas
@@ -26,15 +26,16 @@ def GerarInstrucoes(algoritmo, tarefas, quantum):
     algoritimos = {
         "FIFO": FIFO,
         "SRTF": SRTF,
-        "PrioP": PrioP
+        "PrioP": PrioP,
+        "PrioEnv": PrioEnv
     }  
 
     # instrucoesBrutas = contem as instrucoes selecionadas a partir da lista de tarefas, possuindo informações limitadas
     # listaInativos = contem as instrucoes das tarefas inativas, possuindo informações limitadas
-    instrucoesBrutas, listaInativos = algoritimos[algoritmo](tarefas,tempoMax, quantum)   
+    instrucoesBrutas, listaInativos = algoritimos[algoritmo](tarefas,tempoMax, quantum, alpha)   
 
     # Loop para gerar os detalhes das informações para cada instrucao da lista
-    for i in range(len(instrucoesBrutas)):             
+    for i in range(len(instrucoesBrutas)):       
         instrucoes.append(CriarDadosInstrucao(instrucoesBrutas[i], i,False))
 
     if listaInativos: # Verifica se está vazia a lista
@@ -100,9 +101,9 @@ def LerArquivo(caminho):
 def ProcessarDados(texto):
     tarefas = []
     
-    algoritmo, quantum = texto[0].split(';') # Pega os valores da primeira linha sobre o algoritimo e quantum
+    algoritmo, quantum, alpha = texto[0].split(';') # Pega os valores da primeira linha sobre o algoritimo e quantum
     quantum = int (quantum) # Converte para int
-
+    alpha = int (alpha) # Converte para int
     # Lê as linhas seguintes contendo as informações de cada tarefa
     for linha in texto[1:]:
         linha = linha.strip()
@@ -131,7 +132,7 @@ def ProcessarDados(texto):
                 'eventos': eventos                
             }
         )
-    return tarefas, algoritmo, quantum
+    return tarefas, algoritmo, quantum, alpha
 
 # Funcao para atualizar o "Log do Bloco"
 def AtualizarLog(logBox, mensagem):
