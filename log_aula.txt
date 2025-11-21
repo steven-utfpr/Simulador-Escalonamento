@@ -1,8 +1,0 @@
-2bc41f5 - 2025-10-16 18:19:53 -0300 : Finalizando atividade 16/10/25
-6057ba0 - 2025-10-16 18:04:02 -0300 : Retornando a versao funcional antes da implementacao do quantum
-b1818eb - 2025-10-16 17:23:55 -0300 : Registrar atividade, ainda tentando implementar quantum
-1efe6b0 - 2025-10-16 15:29:43 -0300 : Inicio da implementacao do Quantum
-61f995e - 2025-10-16 15:21:18 -0300 : Configurando o Git para log das atividades
-a976080 - 2025-10-16 15:12:24 -0300 : Continuacao
-
-https://github.com/steven-utfpr/Simulador-Escalonamento/activity

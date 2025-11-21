@@ -1,0 +1,24 @@
+name: Build Linux Executable (Compatível)
+
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      # Garante a instalação das bibliotecas principais
+      - run: pip install pyinstaller matplotlib pillow
+      
+      # Comando PyInstaller aprimorado: Usando --collect-all para matplotlib E PIL
+      - name: Build Executable with Full Collection
+        run: pyinstaller --onefile --hidden-import PIL.ImageTk --collect-all matplotlib --collect-all PIL SimulEscal.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simulador-linux-compativel
+          path: dist/
