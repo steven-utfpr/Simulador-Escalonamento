@@ -20,15 +20,17 @@ def PrioP(tarefas, tempoMax, quantum, alpha):
 
 # Algoritmo PrioEnv, não é afetado pelo quantum
 def PrioEnv(tarefas, tempoMax, quantum,alpha):    
-    return 
+    return Escalonador(tarefas, tempoMax, quantum, alpha, True, algoritmoSelecionado=lambda prontas: PegarMaiorPrioridadeEnv(prontas))
 
 def Escalonador(tarefas, tempoMax, quantum, alpha, usarCopia, algoritmoSelecionado):  
+    tarefasOriginais = copy.deepcopy(tarefas) # Cria uma copia profunda das tarefas para não alterar o conteudo original
     copiaTarefas = tarefas.copy() # Cria uma copia das tarefas para não alterar o conteudo original
     tempoAtual = 0 # Tempo usado para inserir nos detalhes do bloco e controlar o LOOP WHILE
     instrucoes = [] # Lista de instrucoes contento informações uteis para gerar o gráfico
     tarefasInativas = [] # Lista para guardar as instrucoes inativas
     tarefasProntas = [] # Lista de prontas para auxiliar e facilitar na manipulação do que deve ser selecionado
-    tarefasProntas = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual) # Procura por tarefas que já estão ingressadas e possuem duracao restante
+    ingressouNovo = False
+    tarefasProntas, ingressouNovo = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual) # Procura por tarefas que já estão ingressadas e possuem duracao restante
     
     while tempoAtual < tempoMax: # Loop para garantir que a lista de instrucao gerada tenha esvaziado as duracoes das tarefas        
         removido = False # Para previnir que uma tarefa seja removida duas vezes quando o quantum acaba e a tarefa é concluída ao mesmo tempo
@@ -36,8 +38,7 @@ def Escalonador(tarefas, tempoMax, quantum, alpha, usarCopia, algoritmoSeleciona
             
             tarefa = algoritmoSelecionado(tarefasProntas)
             instrucoes.append(tarefa) # Adiciona a tarefa na lista de instrucoes
-            tarefasInativas.extend(PegarTarefasInativas(copiaTarefas, tarefa, tempoAtual)) # Pega e adiciona todas as tarefas que ja estao ingressados no
-            
+            tarefasInativas.extend(PegarTarefasInativas(copiaTarefas, tarefa, tempoAtual)) # Pega e adiciona todas as tarefas que ja estao ingressados no            
             tarefa['duracaoRestante'] -= 1 # Modifica a tarefa que foi 'processado' diminuido sua duracao
             
             if tarefa['duracaoRestante'] == 0:
@@ -45,8 +46,18 @@ def Escalonador(tarefas, tempoMax, quantum, alpha, usarCopia, algoritmoSeleciona
                 removido = True
 
             tempoAtual+=1 # Aumenta o tempo atual da simulação
-            tarefasProntas = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual) # Procura por novas tarefas prontas no tempo atual atualizado,
-                        
+            tarefasProntas, ingressouNovo = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual) # Procura por novas tarefas prontas no tempo atual atualizado,
+            
+            if ingressouNovo or removido:
+                if alpha > 0:
+                    print("Envelhecimento aplicado no tempo:", tempoAtual, "ingressou novo:", ingressouNovo, "removido:", removido)
+                    EnvelhecerPrioridades(alpha, tarefasProntas, tarefa)
+                    index = next((index for (index, d) in enumerate(copiaTarefas) if d["id"] == tarefa['id']))
+                    tarefa['prioridade'] = tarefasOriginais[index]['prioridade'] # Reseta a prioridade da tarefa atual para o valor original
+                    ingressouNovo = False
+                    removido = False
+                    
+                
             if tempoAtual >= tempoMax:
                 break
             
@@ -56,15 +67,19 @@ def Escalonador(tarefas, tempoMax, quantum, alpha, usarCopia, algoritmoSeleciona
     return instrucoes, tarefasInativas
 
 
-def EnvelhecerPrioridades(alpha,tarefasProntas, tarefasAtual, tarefasOriginais, tempoAtual, tarefaAnteriorID, concluida):    
-    return None
+def EnvelhecerPrioridades(alpha,tarefasProntas, tarefasAtual):    
+    for tarefa in tarefasProntas:
+        if tarefa['id'] != tarefasAtual['id']:
+            tarefa['prioridade'] += alpha
+            print("Tarefa", tarefa['nome'], "nova prioridade:", tarefa['prioridade'])
+    print("-----")
 
 # Funcao para buscar por tarefas ingressadas e contendo duracao restante
 def PegarTarefasProntas(tarefas, tarefasProntas, tempoAtual):
     # Faz uma copia das tarefas prontas existente para não altera-la ao retornar,
     # Necessário para o funcionamento correto de uma FILA para o FIFO
     prontas = list(tarefasProntas)
-    
+    ingressouNovo = False
     # Condição para remover tarefas conlcuidas com duracao restante em 0
     # Necesssário para o funcionamento do SRTF e PrioP
     
@@ -74,9 +89,10 @@ def PegarTarefasProntas(tarefas, tarefasProntas, tempoAtual):
     for tarefa in tarefas:
         if tarefa['id'] not in idsProntas and ChecarIngresso(tarefa, tempoAtual) and tarefa['duracaoRestante'] > 0:
             prontas.append(tarefa) # Adiciona a tarefa na lista de prontas caso passe nas condições
+        if tarefa['ingressoTarefa'] == tempoAtual:
+            ingressouNovo = True
     
-    
-    return prontas
+    return prontas, ingressouNovo
 
 # Funcao para buscar por tarefas no tempo atual mas inativas
 def PegarTarefasInativas(tarefas, tarefaAtiva,tempoAtual):
@@ -91,19 +107,25 @@ def PegarTarefasInativas(tarefas, tarefaAtiva,tempoAtual):
     return instrucoesInativas
 
 # Funcao para pegar a tarefa de maior prioridade dentro de uma lista de tarefas prontas
-def PegarMaiorPrioridade(tarefas, env=False):  
+def PegarMaiorPrioridade(tarefas):  
     maiorPrioridade = tarefas[0] # pega o primeiro para usar como comparação
         
     for tarefa in tarefas: # Loop para percorrer pela lista de prontos
         if ChecarDuracaoRestante(tarefa): # Verifica se ainda tem duracao restante
             maiorPrioridade = CompararMaiorPrioridade(tarefa, maiorPrioridade) # Atribui a tarefa de maior prioridade            
-            if env:
-                t1,t2 = CompararIgualPrioridade(tarefa, maiorPrioridade)
-                if t1 and t2:
-                    maiorPrioridade = DesempatePorID(t1, t2)
-
     return maiorPrioridade
 
+def PegarMaiorPrioridadeEnv(tarefas):  
+    maiorPrioridade = tarefas[0] # pega o primeiro para usar como comparação
+        
+    for tarefa in tarefas: # Loop para percorrer pela lista de prontos
+        if ChecarDuracaoRestante(tarefa): # Verifica se ainda tem duracao restante
+            maiorPrioridade = CompararMaiorPrioridade(tarefa, maiorPrioridade) # Atribui a tarefa de maior prioridade  
+            t1,t2 = CompararIgualPrioridade(tarefa, maiorPrioridade)
+            if t1 and t2:
+                maiorPrioridade = DesempatePorID(t1, t2)
+
+    return maiorPrioridade
 # Funcao para pegar a tarefa de menor duracao restante dentro de uma lista de tarefas prontas
 def PegarMenorDuracao(tarefas):
     menorDuracao = tarefas[0] # pega o primeiro para usar como comparação
