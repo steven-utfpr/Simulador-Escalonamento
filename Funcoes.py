@@ -116,7 +116,38 @@ def ProcessarDados(texto):
         ingresso = int (partes[2]) # Guarda o tempo de ingresso da tarefa em int
         duracao = int (partes[3]) # Guarda a duracao em int
         prioridade = int (partes[4]) # Guarda a proridade em int
-        eventos = partes[5] # PROJETO A: SEM USO
+        eventos = []
+
+        # Verifica se existem há pelo menos 6 partes na linha (evento é opcional)
+        # Verifica também se não está vazia de partes em branco
+        if len(partes) > 5 and partes[5].strip():
+            eventosBrutos = partes[5].split(',') # Separa os eventos em strings menores
+            for eventoStr in eventosBrutos:
+                eventoStr = eventoStr.strip() # Remove espaços em branco
+                if eventoStr.startswith('IO:'): # IO:XX-YY, xx é o tempo de inicioRelativo e yy duracao
+                    dadosIO = eventoStr[3:].split('-')                    
+                    tipo = 'IO',
+                    inicio = int(dadosIO[0]),
+                    duracao = int(dadosIO[1]),
+                    eventos.append({'tipo': tipo, 'inicio': inicio, 'duracao': duracao})
+                elif eventoStr.startswith('ML'): # MLxx:00;  xx é o numero do mutex, 00 instante de tempo em que acontece
+                    dadosML = eventoStr[2:].split(':', 1)                    
+                    tipo = 'ML'
+                    mutexID = int(dadosML[0])
+                    instante = int(dadosML[1]) # Instante RELATIVO AO INICIO DA TAREFA
+                    eventos.append({'tipo': tipo, 'mutexID': mutexID, 'instante': instante})
+                elif eventoStr.startswith('MU'): # MUxx:00;  xx é o numero do mutex, 00 instante de tempo em que acontece
+                    dadosMU = eventoStr[2:].split(':', 1)                    
+                    tipo = 'MU'
+                    mutexID = int(dadosMU[0])
+                    instante = int(dadosMU[1]) # Instante RELATIVO AO INICIO DA TAREFA
+                    eventos.append({'tipo': tipo, 'mutexID': mutexID, 'instante': instante})
+
+
+        # IO: operação de I/O em algum dispoisivo externo 
+        # ML: mutex lock   
+        # MU: mutex unlock 
+        # Todos os instantes de tempo indicados nas ações são sempre relativos ao início da tarefa.
 
         # Une cada linha em uma lista com as informações retiradas em string
         tarefas.append (

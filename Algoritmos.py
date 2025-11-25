@@ -32,7 +32,7 @@ def Escalonador(tarefas, tempoMax, quantum, alpha, usarCopia, algoritmoSeleciona
     ingressouNovo = False
     tarefasProntas, ingressouNovo = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual) # Procura por tarefas que já estão ingressadas e possuem duracao restante
     
-    while tempoAtual < tempoMax: # Loop para garantir que a lista de instrucao gerada tenha esvaziado as duracoes das tarefas        
+    while VerificarDuracoesRestantes(copiaTarefas): # Loop para garantir que a lista de instrucao gerada tenha esvaziado as duracoes das tarefas        
         removido = False # Para previnir que uma tarefa seja removida duas vezes quando o quantum acaba e a tarefa é concluída ao mesmo tempo
         for i in range(quantum): # Loop para garantir o funcionamento do quantum, sempre que ele acaba é reiniciado o processo de seleção da proxima tarefa            
             
@@ -49,8 +49,7 @@ def Escalonador(tarefas, tempoMax, quantum, alpha, usarCopia, algoritmoSeleciona
             tarefasProntas, ingressouNovo = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual) # Procura por novas tarefas prontas no tempo atual atualizado,
             
             if ingressouNovo or removido:
-                if alpha > 0:
-                    print("Envelhecimento aplicado no tempo:", tempoAtual, "ingressou novo:", ingressouNovo, "removido:", removido)
+                if alpha > 0:                    
                     EnvelhecerPrioridades(alpha, tarefasProntas, tarefa)
                     index = next((index for (index, d) in enumerate(copiaTarefas) if d["id"] == tarefa['id']))
                     tarefa['prioridade'] = tarefasOriginais[index]['prioridade'] # Reseta a prioridade da tarefa atual para o valor original
@@ -66,13 +65,16 @@ def Escalonador(tarefas, tempoMax, quantum, alpha, usarCopia, algoritmoSeleciona
 
     return instrucoes, tarefasInativas
 
+def VerificarDuracoesRestantes(tarefas):
+    for tarefa in tarefas:
+        if ChecarDuracaoRestante(tarefa):
+           return True 
+    return False
 
 def EnvelhecerPrioridades(alpha,tarefasProntas, tarefasAtual):    
     for tarefa in tarefasProntas:
         if tarefa['id'] != tarefasAtual['id']:
             tarefa['prioridade'] += alpha
-            print("Tarefa", tarefa['nome'], "nova prioridade:", tarefa['prioridade'])
-    print("-----")
 
 # Funcao para buscar por tarefas ingressadas e contendo duracao restante
 def PegarTarefasProntas(tarefas, tarefasProntas, tempoAtual):
