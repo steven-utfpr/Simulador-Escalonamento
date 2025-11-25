@@ -9,10 +9,11 @@ def GerarGrafico(canvasGantt, config, instrucoes, instrucoesInativas, maxTempo, 
     
     CriarBordas(canvasGantt, config, maxTempo, maxTid) # Desenha as bordas do gráfico
     CriarEixos(canvasGantt, config, maxTempo, maxTid) # Desenha os eixos indicando onde está cada tempo e tarefa
-    if not usarPasso: # Condição para verificar se está usando o passo a passo
+    if not usarPasso: # Condição para verificar se está usando o passo a passo    
         # Loop para gerar os blocos das tarefas ativas
         for instrucao in instrucoes:
-            CriarBarra(canvasGantt, config, instrucao, maxTid, PegarInfoBarra)
+            if instrucao['id'] != -1:
+                CriarBarra(canvasGantt, config, instrucao, maxTid, PegarInfoBarra)
         # Loop para gerar os blocos indicando a tarefa inativa
         for instrucaoInativa in instrucoesInativas:
             CriarBarra(canvasGantt, config, instrucaoInativa, maxTid, PegarInfoBarra)

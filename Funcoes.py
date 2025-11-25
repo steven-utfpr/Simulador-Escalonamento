@@ -21,7 +21,7 @@ def SelArquivo(arqSel):
 def GerarInstrucoes(algoritmo, tarefas, quantum, alpha):
     instrucoes = [] # Variavel para armazenar as instrucoes para criar cada bloco
     instrucoesInativas = [] # Variavel para armazenar as instrucoes para criar os blocos representando as tarefas inativas
-    tempoMax = DuracaoTotal(tarefas) # Calcula o tempo máximo da simulação a partir da lista de tarefas
+   
     # Variavel para selecionar qual algoritimo usar
     algoritimos = {
         "FIFO": FIFO,
@@ -32,15 +32,18 @@ def GerarInstrucoes(algoritmo, tarefas, quantum, alpha):
 
     # instrucoesBrutas = contem as instrucoes selecionadas a partir da lista de tarefas, possuindo informações limitadas
     # listaInativos = contem as instrucoes das tarefas inativas, possuindo informações limitadas
-    instrucoesBrutas, listaInativos = algoritimos[algoritmo](tarefas,tempoMax, quantum, alpha)   
+    instrucoesBrutas, listaInativos = algoritimos[algoritmo](tarefas, quantum, alpha)   
 
     # Loop para gerar os detalhes das informações para cada instrucao da lista
-    for i in range(len(instrucoesBrutas)):       
+    for i in range(len(instrucoesBrutas)): 
         instrucoes.append(CriarDadosInstrucao(instrucoesBrutas[i], i,False))
 
     if listaInativos: # Verifica se está vazia a lista
        for i in range(len(listaInativos)): # Loop para gerar os detalhes das informações para as instruções inativas  
            instrucoesInativas.append (CriarDadosInstrucao(listaInativos[i], listaInativos[i]['ingressoTempo'],True) )
+
+    if instrucoes[len(instrucoes)-1]['id'] == -1: # Verifica se a ultima instrução é ociosidade
+        instrucoes.pop() # Remove a ultima instrução de ociosidade
 
     return instrucoes, instrucoesInativas
 
@@ -65,17 +68,11 @@ def CriarDadosInstrucao(instrucao, tempoIngresso, inativo):
         'ingressoTempo': tempoIngresso, # Valor importante usado para definir em que tempo o bloco vai ser desenhado
         'duracao': instrucao['duracao'], 
         'duracaoRestante': instrucao['duracaoRestante'], 
+        'tempoRelativo': 0,
         'prioridade': instrucao['prioridade'], 
         'estado': estado,
         'eventos': instrucao['eventos']
         }   
-
-# Funcao para calcular o tempo total a partir das tarefas
-def DuracaoTotal(tarefas):
-    count = 0
-    for tarefa in tarefas: # Loop para percorrer todas as tarefas da lista
-        count += tarefa['duracao'] # Pega a duracao de cada tarefa e soma elas
-    return count # Retorna a soma
    
 # Funcao para definir as configurações do scroll
 def DefinirScrollGantt(canvasGantt, config, maxTempo, maxTid):
@@ -109,41 +106,41 @@ def ProcessarDados(texto):
         linha = linha.strip()
         if not linha:
             continue
-        partes = linha.split(';',6) # Separa os conteudos da linha onde tiver ';'
+        partes = linha.split(';') # Separa os conteudos da linha onde tiver ';'
         nome = partes[0] # Guarda o nome da tarefa ex: t1, t2, t3
         id = int(nome[1:]) # Retira do nome o numero para utilizar como id em int
         cor =  int (partes[1]) # Guarda o valor da cor em int
         ingresso = int (partes[2]) # Guarda o tempo de ingresso da tarefa em int
-        duracao = int (partes[3]) # Guarda a duracao em int
+        duracaoT = int (partes[3]) # Guarda a duracao em int
         prioridade = int (partes[4]) # Guarda a proridade em int
         eventos = []
 
         # Verifica se existem há pelo menos 6 partes na linha (evento é opcional)
         # Verifica também se não está vazia de partes em branco
         if len(partes) > 5 and partes[5].strip():
-            eventosBrutos = partes[5].split(',') # Separa os eventos em strings menores
-            for eventoStr in eventosBrutos:
+            eventosBrutos = partes[5].split(';')  # Separa os eventos em strings menores~
+            
+            for eventoStr in partes[5:]:
                 eventoStr = eventoStr.strip() # Remove espaços em branco
                 if eventoStr.startswith('IO:'): # IO:XX-YY, xx é o tempo de inicioRelativo e yy duracao
                     dadosIO = eventoStr[3:].split('-')                    
-                    tipo = 'IO',
-                    inicio = int(dadosIO[0]),
-                    duracao = int(dadosIO[1]),
-                    eventos.append({'tipo': tipo, 'inicio': inicio, 'duracao': duracao})
+                    tipo = 'IO'
+                    inicio = int(dadosIO[0])
+                    duracao = int(dadosIO[1])
+                    eventos.append({'tipo': tipo, 'inicio': inicio, 'duracao': duracao})                    
                 elif eventoStr.startswith('ML'): # MLxx:00;  xx é o numero do mutex, 00 instante de tempo em que acontece
                     dadosML = eventoStr[2:].split(':', 1)                    
                     tipo = 'ML'
                     mutexID = int(dadosML[0])
                     instante = int(dadosML[1]) # Instante RELATIVO AO INICIO DA TAREFA
-                    eventos.append({'tipo': tipo, 'mutexID': mutexID, 'instante': instante})
+                    eventos.append({'tipo': tipo, 'mutexID': mutexID, 'duracao': instante})
                 elif eventoStr.startswith('MU'): # MUxx:00;  xx é o numero do mutex, 00 instante de tempo em que acontece
                     dadosMU = eventoStr[2:].split(':', 1)                    
                     tipo = 'MU'
                     mutexID = int(dadosMU[0])
                     instante = int(dadosMU[1]) # Instante RELATIVO AO INICIO DA TAREFA
-                    eventos.append({'tipo': tipo, 'mutexID': mutexID, 'instante': instante})
-
-
+                    eventos.append({'tipo': tipo, 'mutexID': mutexID, 'duracao': instante})
+            
         # IO: operação de I/O em algum dispoisivo externo 
         # ML: mutex lock   
         # MU: mutex unlock 
@@ -157,12 +154,13 @@ def ProcessarDados(texto):
                 'cor': cor + 1,
                 'ingressoTarefa': ingresso,
                 'ingressoTempo' : 0,
-                'duracao': duracao,
-                'duracaoRestante': duracao,
+                'duracao': duracaoT,
+                'duracaoRestante': duracaoT,
                 'prioridade': prioridade,
                 'eventos': eventos                
             }
         )
+        
     return tarefas, algoritmo, quantum, alpha
 
 # Funcao para atualizar o "Log do Bloco"

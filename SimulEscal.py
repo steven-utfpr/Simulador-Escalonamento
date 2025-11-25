@@ -52,6 +52,7 @@ class SimulEscal:
         if self.caminhoArq is not None:
             texto = LerArquivo(self.caminhoArq) # Lê o conteúdo do arquivo selecionado
             self.tarefas, self.algoritmo, self.quantum, self.alpha = ProcessarDados(texto) # Processa os dados do arquivo para obter as tarefas, algoritmo e quantum
+            
         # Caso nenhum arquivo tenha sido selecionado, utiliza uma configuração padrão
         else:
             self.tarefas, self.algoritmo, self.quantum, self.alpha = self.UsarConfigPadrao() # Usa configuração padrão        
