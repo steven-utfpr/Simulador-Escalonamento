@@ -63,7 +63,7 @@ def CriarTelaConfig(self,root):
     infoAlgo = tk.Label(frame, textvariable=self.infoAlgo, font=("Arial", 12), bg="lightgray") # Cria o texto onde será escrito o algoritmo usado
     infoQuantum = tk.Label(frame, textvariable=self.infoQuantum, font=("Arial", 12), bg="lightgray") # Cria o texto onde será escrito o quantu,
     labelTempo = tk.Label(frame, text="Tempo", font=("Arial", 10), bg="lightgray") # Cria um pequeno titulo indicar a que se refere o campoTempoAtual na interface
-    infoExtra = tk.Label(frame, text="Clique na Barra\n para ver mais\n Informações", font=("Arial", 12), bg="lightgray") # Cria um texto para mostrar que dá para clicar nos blocos
+    infoExtra = tk.Label(frame, text="Clique na Barra\n para ver mais\n Informações\n \\\\\\\\ = Mutex \n ////= IO", font=("Arial", 12), bg="lightgray") # Cria um texto para mostrar que dá para clicar nos blocos
 
     # Configuração da grid para posicionar cada elemento dentro do painel de Configurações
     tituloConfig.grid(row=0, column=0, padx=2, pady=5)

@@ -30,14 +30,23 @@ def CriarBarra(canvasGantt,config, instrucao, maxTid, PegarInfoBarra=None):
     tempoAtual = instrucao['ingressoTempo']
     tidAtual = instrucao['id']-1
     cor = instrucao['cor']
+    bloqueadoIO = instrucao['bloqueadoIO']
+    mutex = instrucao['mutexID']
 
     xMin = escalaX * (tempoAtual+1) # Posição inicial no eixo X
     xMax = escalaX * (tempoAtual+1) + escalaX # Posição final no eixo X, fechando o retângulo criado no espaço de tempo
     yMin = (escalaY  * (maxTid - tidAtual)) + 5 # Posição inicial no eixo Y, utilizando id como multiplicador
     yMax = (escalaY  * (maxTid - tidAtual)) + escalaY  # Posição final no eixo Y, fechando o retângulo criado com a base inicial em yMin
-    rectID = canvasGantt.create_rectangle(xMin, yMin, xMax, yMax, fill=cores[cor], outline="black") # Cria efetivamente o retangulo
-    rectTextID = canvasGantt.create_text((xMin + xMax) / 2, (yMin + yMax) / 2, text=f"T{tidAtual+1}", fill="black") # Cria efetivamente o texto
+    rectID = canvasGantt.create_rectangle(xMin, yMin, xMax, yMax, fill=cor, outline="black") # Cria efetivamente o retangulo
+    textRect = f"T{tidAtual+1}"
+    if bloqueadoIO:
+        textRect+= " ////"
+    elif mutex != -1 and cor!= "#FFFFFF":
+        textRect+= f" \\\\{mutex} \\\\"
+    rectTextID = canvasGantt.create_text((xMin + xMax) / 2, (yMin + yMax) / 2, text=textRect, fill="black") # Cria efetivamente o texto
     
+    
+
     # Função de destaque (hover)
     def on_enter(event):
         canvasGantt.itemconfig(rectID, width=3, outline="darkblue")  # destaca

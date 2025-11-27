@@ -35,7 +35,7 @@ def GerarInstrucoes(algoritmo, tarefas, quantum, alpha):
     instrucoesBrutas, listaInativos = algoritimos[algoritmo](tarefas, quantum, alpha)   
 
     # Loop para gerar os detalhes das informações para cada instrucao da lista
-    for i in range(len(instrucoesBrutas)): 
+    for i in range(len(instrucoesBrutas)):         
         instrucoes.append(CriarDadosInstrucao(instrucoesBrutas[i], i,False))
 
     if listaInativos: # Verifica se está vazia a lista
@@ -51,14 +51,13 @@ def GerarInstrucoes(algoritmo, tarefas, quantum, alpha):
 # Informações serão mostradas ao clicar no bloco gerado no gráfico
 def CriarDadosInstrucao(instrucao, tempoIngresso, inativo):    
     if inativo:
-        cor = 0 # Define a cor branca caso seja para representar uma tarefa inativa
+        cor = "#FFFFFF" # Define a cor branca caso seja para representar uma tarefa inativa
         estado = False # Usado para determinar se deve ser escrito que o bloco esta inativo
         instrucao['duracaoRestante'] = "---" # Restante que seria mostrado nas informações de um bloco inativo
     else:
         cor = instrucao['cor'] # Para escrever qual indice da cor foi utilizado
         estado = True # Usado para determinar se deve ser escrito que o bloco esta inativo
-        instrucao['duracaoRestante'] += 1 # Definir o tempo total processado da tarefa
-
+        instrucao['duracaoRestante'] += 1 # Definir o tempo total processado da tarefa    
     # Retorna um bloco de informações para salvar em um campo da lista
     return{
         'nome': instrucao['nome'],
@@ -71,7 +70,9 @@ def CriarDadosInstrucao(instrucao, tempoIngresso, inativo):
         'tempoRelativo': 0,
         'prioridade': instrucao['prioridade'], 
         'estado': estado,
-        'eventos': instrucao['eventos']
+        'eventos': instrucao['eventos'],
+        'mutexID': instrucao['mutexID'],
+        'bloqueadoIO': instrucao['bloqueadoIO']
         }   
    
 # Funcao para definir as configurações do scroll
@@ -109,7 +110,7 @@ def ProcessarDados(texto):
         partes = linha.split(';') # Separa os conteudos da linha onde tiver ';'
         nome = partes[0] # Guarda o nome da tarefa ex: t1, t2, t3
         id = int(nome[1:]) # Retira do nome o numero para utilizar como id em int
-        cor =  int (partes[1]) # Guarda o valor da cor em int
+        cor = partes[1] # Guarda o valor da cor em int
         ingresso = int (partes[2]) # Guarda o tempo de ingresso da tarefa em int
         duracaoT = int (partes[3]) # Guarda a duracao em int
         prioridade = int (partes[4]) # Guarda a proridade em int
@@ -118,8 +119,6 @@ def ProcessarDados(texto):
         # Verifica se existem há pelo menos 6 partes na linha (evento é opcional)
         # Verifica também se não está vazia de partes em branco
         if len(partes) > 5 and partes[5].strip():
-            eventosBrutos = partes[5].split(';')  # Separa os eventos em strings menores~
-            
             for eventoStr in partes[5:]:
                 eventoStr = eventoStr.strip() # Remove espaços em branco
                 if eventoStr.startswith('IO:'): # IO:XX-YY, xx é o tempo de inicioRelativo e yy duracao
@@ -151,13 +150,15 @@ def ProcessarDados(texto):
             {
                 'nome': nome,
                 'id': id,
-                'cor': cor + 1,
+                'cor': cor,
                 'ingressoTarefa': ingresso,
                 'ingressoTempo' : 0,
                 'duracao': duracaoT,
                 'duracaoRestante': duracaoT,
                 'prioridade': prioridade,
-                'eventos': eventos                
+                'eventos': eventos,
+                'mutexID': -1,
+                'bloqueadoIO': False                    
             }
         )
         

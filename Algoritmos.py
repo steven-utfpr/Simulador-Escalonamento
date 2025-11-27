@@ -30,29 +30,50 @@ def Escalonador(tarefas, quantum, alpha, usarCopia, algoritmoSelecionado):
     tarefasInativas = [] # Lista para guardar as instrucoes inativas
     tarefasProntas = [] # Lista de prontas para auxiliar e facilitar na manipulação do que deve ser selecionado
     ingressouNovo = False
-    eventos = PegarEventos(copiaTarefas)
-    mutexEmUso = [] # Lista para guardar os mutex que estão em uso
-    tarefasProntas, ingressouNovo = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual,eventos, mutexEmUso) # Procura por tarefas que já estão ingressadas e possuem duracao restante
+    mutexEmUso = []
+    tarefasProntas, ingressouNovo = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual,mutexEmUso) # Procura por tarefas que já estão ingressadas e possuem duracao restante
     
-
     while VerificarDuracoesRestantes(copiaTarefas): # Loop para garantir que a lista de instrucao gerada tenha esvaziado as duracoes das tarefas        
         removido = False # Para previnir que uma tarefa seja removida duas vezes quando o quantum acaba e a tarefa é concluída ao mesmo tempo
         for i in range(quantum): # Loop para garantir o funcionamento do quantum, sempre que ele acaba é reiniciado o processo de seleção da proxima tarefa            
-            if tarefasProntas != []:            
+            if tarefasProntas != []: 
+                # Reavaliar para remover tarefas que nao deveriam estar em prontas pois estao bloqueadas por IO ou MUTEX
+                tarefasProntas = [t for t in tarefasProntas if not BloquearTarefa(t, mutexEmUso)]         
+                # Seleciona a tarefa de acordo com o algoritmo selecionado
                 tarefa = algoritmoSelecionado(tarefasProntas)
-                instrucoes.append(tarefa) # Adiciona a tarefa na lista de instrucoes                
+                                
+                # Para fins de exibição ao clicar na barra no gráfico, e mostrar corretamente as informações
+                tarefa['bloqueadoIO'] = False
+                if mutexEmUso:
+                    for mutex in mutexEmUso:
+                        if mutex['tid'] == tarefa['id']:
+                            tarefa['mutexID'] = mutex['mid']
+                            break
+                        else:
+                            tarefa['mutedID'] = -1
+                            
+
+                instrucoes.append(copy.deepcopy((tarefa))) # Adiciona a tarefa na lista de instrucoes                
                 tarefasInativas.extend(PegarTarefasInativas(copiaTarefas, tarefa, tempoAtual)) # Pega e adiciona todas as tarefas que ja estao ingressados no            
                 tarefa['duracaoRestante'] -= 1 # Modifica a tarefa que foi 'processado' diminuido sua duracao           
+                AtualizarEventosTarefa(tarefa, mutexEmUso)
+                
                 if tarefa['duracaoRestante'] == 0:
-                    tarefasProntas = [t for t in tarefasProntas if t['duracaoRestante'] > 0] 
+                    for mutex in mutexEmUso:                        
+                        if mutex['tid'] == tarefa['id']:
+                            # Remove o Mutex usado pela tarefa que concluiu
+                            mutexEmUso = [(tid, mid) for tid, mid in mutexEmUso if tid == tarefa['id']]
+                           
+                    tarefasProntas = [t for t in tarefasProntas if t['duracaoRestante'] > 0]                     
                     removido = True
-            
-            tempoAtual+=1 # Aumenta o tempo atual da simulação
-            ControleDeEventos(copiaTarefas, eventos, mutexEmUso, tempoAtual) # Controla os eventos de IO e Mutex
 
-            tarefasProntas, ingressouNovo = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual, eventos, mutexEmUso) # Procura por novas tarefas prontas no tempo atual atualizado,
+            tempoAtual+=1 # Aumenta o tempo atual da simulação
+           
+            tarefasProntas, ingressouNovo = PegarTarefasProntas(copiaTarefas, tarefasProntas,tempoAtual, mutexEmUso) # Procura por novas tarefas prontas no tempo atual atualizado,
+            
+            # Adiciona um campo vazio
             if tarefasProntas == []:                
-                instrucoes.append({'nome': 'OCIOSO', 'id': -1, 'cor': 0, 'ingressoTarefa': -1, 'ingressoTempo': tempoAtual, 'duracao': 0, 'duracaoRestante': 0, 'tempoRelativo': 0, 'prioridade': -1, 'estado': True, 'eventos': []})
+                instrucoes.append({'nome': 'OCIOSO', 'id': -1, 'cor': 0, 'ingressoTarefa': -1, 'ingressoTempo': tempoAtual, 'duracao': 0, 'duracaoRestante': 0, 'tempoRelativo': 0, 'prioridade': -1, 'estado': True, 'eventos': [], 'mutexID': -1, 'bloqueadoIO': False})
                 
             if tarefa and (ingressouNovo or removido):
                 if alpha > 0:                    
@@ -65,75 +86,11 @@ def Escalonador(tarefas, quantum, alpha, usarCopia, algoritmoSelecionado):
             
         if not usarCopia and len(tarefasProntas) > 0 and not removido:
             tarefasProntas.pop(0) # Remove o primeiro da lista de prontos a tarefa quando o quantum dele acaba, impedindo que ele rode até o final
-
+    
     return instrucoes, tarefasInativas
 
-def VerificarDuracoesRestantes(tarefas):
-    for tarefa in tarefas:
-        if ChecarDuracaoRestante(tarefa):
-           return True 
-    return False
-
-def EnvelhecerPrioridades(alpha,tarefasProntas, tarefasAtual):    
-    for tarefa in tarefasProntas:
-        if tarefa['id'] != tarefasAtual['id']:
-            tarefa['prioridade'] += alpha
-
-def ControleDeEventos(tarefas, eventos, mutexEmUso, tempoAtual):
-    AtualizarDuracaoEventos(tarefas,eventos, tempoAtual) # Atualiza a duracao dos eventos em cada tarefa pronta
-    for evento in eventos:
-        tipo = evento[1]['tipo']
-        tarefa = next((t for t in tarefas if t['id'] == evento[0]), None)
-        if tarefa and ChecarIngresso(tarefa, tempoAtual):
-            if tipo == 'ML' and evento[1]['duracao'] <= 0:
-                idMutex = evento[1]['mutexID']
-                mutexEmUso = AdicionarMutexEmUso(mutexEmUso, idMutex)
-            if tipo == 'MU' and evento[1]['duracao'] <= 0:
-                idMutex = evento[1]['mutexID']
-                if idMutex in mutexEmUso:
-                    mutexEmUso.remove(idMutex)
-    
-
-def PegarEventos(tarefas):
-    eventos = []
-    for tarefa in tarefas:
-        if tarefa['eventos']:
-            for evento in tarefa['eventos']:
-                eventos.append((tarefa['id'],evento))
-    return eventos
-
-def AdicionarMutexEmUso(mutexEmUso, idMutex):
-    if idMutex not in mutexEmUso:
-        mutexEmUso.append(idMutex)
-    return mutexEmUso
-
-# Funcao para atualizar a duracao dos eventos em cada tarefa pronta
-def AtualizarDuracaoEventos(tarefas,eventos, tempoAtual):    
-    if eventos:
-        for evento in eventos:
-            tipo = evento[1]['tipo']
-            tarefa = next((t for t in tarefas if t['id'] == evento[0]), None)
-            if tarefa and ChecarIngresso(tarefa, tempoAtual):
-                if tipo in ['ML','MU'] or (tipo == 'IO' and evento[1]['inicio'] <= 0):
-                    evento[1]['duracao'] -= 1
-                else:
-                    evento[1]['inicio'] -= 1
-                
-def BloquearPorEventos(eventos, mutexEmUso, idTarefa):
-    if eventos:
-        for evento in eventos:    
-            if evento[0] == idTarefa:
-                tipo = evento[1]['tipo']
-                if tipo == 'IO' and evento[1]['inicio'] <= 0 and evento[1]['duracao'] > 0:
-                    return True # Bloqueia a tarefa
-                elif tipo == 'ML':
-                    return True if evento[1]['mutexID'] in mutexEmUso else False
-    return False
-    
-        
-
 # Funcao para buscar por tarefas ingressadas e contendo duracao restante
-def PegarTarefasProntas(tarefas, tarefasProntas, tempoAtual, eventos=None, mutexEmUso=None):
+def PegarTarefasProntas(tarefas, tarefasProntas, tempoAtual, mutexEmUso):
     
     # Faz uma copia das tarefas prontas existente para não altera-la ao retornar,
     # Necessário para o funcionamento correto de uma FILA para o FIFO
@@ -146,14 +103,75 @@ def PegarTarefasProntas(tarefas, tarefasProntas, tempoAtual, eventos=None, mutex
     idsProntas = [t['id'] for t in prontas] # Lista para guardar os IDs das tarefas já presentes na lista de prontas
     # Loop para buscar por tarefas ingressadas e com duracao restante, evitando também tarefas iguais
     for tarefa in tarefas:
+        
         if tarefa['id'] not in idsProntas and ChecarIngresso(tarefa, tempoAtual) and tarefa['duracaoRestante'] > 0:
-            if not BloquearPorEventos(eventos, mutexEmUso, tarefa['id']):                
+            # Condição importante para previnir que uma tarefa entre nas prontas quando está bloqueada por IO ou MUTEX
+            if not BloquearTarefa(tarefa, mutexEmUso):
                 prontas.append(tarefa) # Adiciona a tarefa na lista de prontas caso passe nas condições
         if tarefa['ingressoTarefa'] == tempoAtual:
             ingressouNovo = True
-    
+
     return prontas, ingressouNovo
 
+# Usado para previnir que uma tarefa que esteja bloqueado possa entrar na lista de tarefasProntas
+def BloquearTarefa(tarefa, mutexEmUso):      
+    # Loop nos eventos presentes na tarefa
+    for evento in tarefa['eventos']:
+        tipo = evento['tipo'] # Para facilitar no codigo atribuir no tipo 
+        # Verifica se for um evento de I/O se ele já está iniciado e rodando
+        if tipo == 'IO' and evento['inicio'] == 0 and evento['duracao'] > 0: 
+            evento['duracao'] -= 1 # Duracao é diminuida para fazer o controle e quando chegar a 0 eu sei que ele terminou o evento de IO
+            tarefa['bloqueadoIO'] = True # Para fins de exibição ao clicar na barra no grafico
+            return True  # Retorna verdadeiro para indicar que deve ser bloqueado
+        elif tipo =='IO': # Para fins de exibição de informações ao clicar na barra no gráfico      
+            tarefa['bloqueadoIO'] = False
+            tarefa['eventos'] = [
+                e for e in tarefa['eventos']
+                if not (e['tipo'] == 'IO' and evento['inicio'] == 0 and e['duracao'] == 0)]
+        # Verifica se há uma requisição de mutex quando a duracao dele está em 0
+        if tipo == 'ML' and evento['duracao'] == 0:             
+            mutexID = evento['mutexID']
+            # Loop no mutexEmUso para buscar se há um mutexID já sendo utilizado
+            for m in mutexEmUso:                
+                if m['mid'] == mutexID and m['tid'] != tarefa['id']:
+                    return True  # bloqueia se mutex ocupado por outro
+    return False
+
+# Funcao para atualizar o tempo de inicio e duracoes dos eventos relacionados a tarefa em execução
+def AtualizarEventosTarefa(tarefa, mutexEmUso=None):
+    # Loop em todos os eventos presentes na tarefa
+    for evento in tarefa['eventos']:
+        tipo = evento['tipo']
+        # Diminui o inicio da IO para saber quando ele chegar em 0 iniciar o evento de IO
+        if tipo == 'IO' and evento['inicio'] > 0:
+            evento['inicio'] -=1 
+        # Caso seja um mutex e a duracao dele está em 0, indicando requisição de mutex ou liberação senão apenas diminua sua duração
+        if tipo in ['ML', 'MU'] and evento['duracao'] == 0:
+            ControleMutex(tarefa, tipo, mutexEmUso, evento['mutexID'])      
+        else:
+            evento['duracao']-=1
+
+# Funcao para controle do mutex
+def ControleMutex(tarefa,tipo,mutexEmUso, mutexID):
+    # Se for um MUTEXLOCK
+    if tipo == 'ML':
+        # Verifica se já não existe um mutex de mesmo id em uso
+        if not any(m['mid'] == mutexID for m in mutexEmUso):
+            # Adiciona numa lista para controle dos mutex em uso            
+            mutexEmUso.append({'tid' : tarefa['id'], 'mid' : mutexID})               
+            # Remove dos eventos da TAREFA o evento de ML após ele ser chamado para evitar erros
+            tarefa['eventos'] = [
+                e for e in tarefa['eventos']
+                if not (e['tipo'] == 'ML' and e['duracao'] == 0)]     
+    # Se for um MUTEXUNLOCK  
+    elif tipo == 'MU':
+        # remove o mutex da lista de mutex em uso
+        mutexEmUso[:] = [m for m in mutexEmUso if m['mid'] != mutexID]
+        # remove o evento da TAREFA
+        tarefa['eventos'] = [
+            e for e in tarefa['eventos']
+            if not (e['tipo'] == 'MU' and e['duracao'] == 0)]
+    
 # Funcao para buscar por tarefas no tempo atual mas inativas
 def PegarTarefasInativas(tarefas, tarefaAtiva,tempoAtual):    
     instrucoesInativas = [] # variável para guardar uma lista das instrucoes inativas
@@ -186,6 +204,12 @@ def PegarMaiorPrioridadeEnv(tarefas):
                 maiorPrioridade = DesempatePorID(t1, t2)
 
     return maiorPrioridade
+
+def EnvelhecerPrioridades(alpha,tarefasProntas, tarefasAtual):    
+    for tarefa in tarefasProntas:
+        if tarefa['id'] != tarefasAtual['id']:
+            tarefa['prioridade'] += alpha
+
 # Funcao para pegar a tarefa de menor duracao restante dentro de uma lista de tarefas prontas
 def PegarMenorDuracao(tarefas):
     menorDuracao = tarefas[0] # pega o primeiro para usar como comparação
@@ -215,3 +239,9 @@ def CompararIgualPrioridade(tarefa1, tarefa2):
 
 def DesempatePorID(tarefa1, tarefa2):
     return tarefa1 if tarefa1['id'] > tarefa2['id'] else tarefa2
+
+def VerificarDuracoesRestantes(tarefas):
+    for tarefa in tarefas:
+        if ChecarDuracaoRestante(tarefa):
+           return True 
+    return False

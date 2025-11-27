@@ -78,7 +78,8 @@ class SimulEscal:
     # Função contendo as configurações padrão, caso não seja selecionado um .txt para simular
     def UsarConfigPadrao(self):
         tarefas = [] # Variável para armazenar o conteudos das tarefas: prioridade, duracao, ingresso
-        configPadrao = 'SRTF;2;1\n', 't01;0;0;5;2;\n', 't02;1;0;2;3;\n', 't03;2;1;4;1;\n', 't04;3;3;1;4;\n', 't05;4;5;2;5;\n' # String contendo as configurações padrão
+        configPadrao = 'SRTF;2;1\n', 't01;#cc0000;0;5;2;\n', 't02;#2986cc;0;2;3;\n', 't03;#6aa84f;1;4;1;\n', 't04;#ffd966;3;1;4;\n', 't05;#6a329f;5;2;5;\n' # String contendo as configurações padrão
+        
         # OBS: os valores são os mesmo presente no Capítulo 6 do pdf do Carlos Maziero, Página 73
         tarefas, algoritmo, quantum, alpha = ProcessarDados(configPadrao)
        
@@ -108,7 +109,7 @@ class SimulEscal:
 ────────────────────────────
 Tarefa: T{instrucao['id'] }| Algoritmo: {self.algoritmo} | Quantum: {self.quantum} | Estado: {estado} 
 Tempo Ingresso: {instrucao['ingressoTempo']} | Tempo Processado: {instrucao['duracaoRestante']}
-Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} | Cor (índice): {instrucao['cor']}
+Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} | Cor (HEX): {instrucao['cor']} | MutexUso: {instrucao['mutexID']} | IO Blocked: {instrucao['bloqueadoIO']} |Eventos: {instrucao['eventos']}
 ────────────────────────────
 """
         # Atualiza o bloco de texto
@@ -185,6 +186,7 @@ Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} 
         inicio = [] # Define onde cada bloco deve ser desenhado inicialmente
         duracao = [] # Define o quão largo cada bloco será, a princípio será do tamanho de uma unidade de tempo
         tCores = [] # Define a cor de cada bloco
+        textos = []
 
         totalTarefas = len(self.tarefas) # Define o tamanho
         tempoMax = len(self.instrucoes)
@@ -193,10 +195,20 @@ Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} 
 
         # Loop para incluir cada instrucao nas suas devidas listas
         for i in range(len(self.instrucoesUnidas)):
+            bloqueadoIO = self.instrucoesUnidas[i]['bloqueadoIO']
+            mutex = self.instrucoesUnidas[i]['mutexID']
+            cor = self.instrucoesUnidas[i]['cor']
+            text = f"T{self.instrucoesUnidas[i]['id']}"
+            if bloqueadoIO:
+                text+= " ////"
+            elif mutex != -1 and cor!= "#FFFFFF":
+                text+= f" \\\\{mutex} \\\\"
+            
             tarefas.append(f"T{self.instrucoesUnidas[i]['id']}")
             duracao.append(1)
             inicio.append(self.instrucoesUnidas[i]['ingressoTempo'])
-            tCores.append(cores[self.instrucoesUnidas[i]['cor']])
+            tCores.append(self.instrucoesUnidas[i]['cor'])
+            textos.append(text)
         
         fig, ax = plt.subplots(figsize=(tempoMax, totalTarefas)) # Para facilitar o controle dos conteudos em ax
 
@@ -205,7 +217,7 @@ Duração Total: {instrucao['duracao']} | Prioridade: {instrucao['prioridade']} 
         
         # Loop para escrever em cada 'bloco' um texto para reforçar qual tarefa pertence
         for i in range(len(tarefas)):
-            ax.text(inicio[i] + duracao[i]/2, tarefas[i], f"T{self.instrucoesUnidas[i]['id']}", va='center', ha='center', color='black', fontweight='bold', fontsize=9)
+            ax.text(inicio[i] + duracao[i]/2, tarefas[i], textos[i], va='center', ha='center', color='black', fontweight='bold', fontsize=9)
                 
         plt.xlim(0,tempoMax) # Remove o vão que ficaria na geração da imagem no último tempo
         plt.xticks(range(0,tempoMax+1)) # Faz com que o gráfico mostre todos os números no eixo do tempo ao invés de 2 em 2
