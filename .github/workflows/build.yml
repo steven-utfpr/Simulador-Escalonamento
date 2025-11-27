@@ -21,25 +21,42 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller matplotlib
+          pip install pyinstaller matplotlib pillow
 
-      - name: Build executable
-        run: pyinstaller --onefile SimulEscal.py
+      - name: Build executable (platform-specific args)
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            pyinstaller \
+              --onefile \
+              --hidden-import PIL.ImageTk \
+              --collect-all matplotlib \
+              --collect-all PIL \
+              SimulEscal.py
+          else
+            pyinstaller --onefile SimulEscal.py
+          fi
+        shell: bash
+        env:
+          RUNNER_OS: ${{ runner.os }}
 
       - name: Rename executable for clarity
         run: |
-          $os = "${{ matrix.os }}"
-          if ($os -eq "windows-latest") {
-            Move-Item -Path dist\SimulEscal.exe -Destination dist\SimulEscal-windows.exe
-          } elseif ($os -eq "ubuntu-latest") {
-            mv dist/SimulEscal dist/SimulEscal-linux
-          } else {
-            mv dist/SimulEscal dist/SimulEscal-macos
-          }
-        shell: pwsh
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            mv "dist/SimulEscal.exe" "dist/SimulEscal-windows.exe"
+          elif [ "$RUNNER_OS" = "Linux" ]; then
+            mv "dist/SimulEscal" "dist/SimulEscal-linux"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            mv "dist/SimulEscal" "dist/SimulEscal-macos"
+          fi
+        shell: bash
+        env:
+          RUNNER_OS: ${{ runner.os }}
 
-      - name: Upload artifact
+      - name: Upload artifact (individual per OS)
         uses: actions/upload-artifact@v4
         with:
           name: SimulEscal-${{ matrix.os }}
-          path: dist/
+          path: |
+            dist/SimulEscal-windows.exe
+            dist/SimulEscal-linux
+            dist/SimulEscal-macos
