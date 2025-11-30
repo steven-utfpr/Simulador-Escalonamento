@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from Janelas import CriarInterface
+from Janelas import CriarInterface, AbrirEdicao
 from Funcoes import LerArquivo, SelArquivo, WriteLockBox, GerarInstrucoes,ProcessarDados, AtualizarLog,DefinirScrollGantt
 from Grafico import GerarGrafico, CriarBarra, ApagarBarra, cores
 
@@ -19,8 +19,14 @@ class SimulEscal:
         self.usarPasso = False # Variável para controlar o modo passo a passo
         self.barraID = [] # Variável para armazenar os IDs das barras criadas no gráfico, utilizado no modo passo a passo para apagar as barras
         self.caminhoArq = None # Variável para armazenar o caminho do arquivo de configuração
-        self.tempoAtual = 0 # Variável para armazenar o tempo atual da simulação, utilizado no modo passo a passo
-       
+        self.tempoAtual = 0 # Variável para armazenar o tempo atual da simulação, utilizado no modo passo a passo        
+        self.janelaEdicao = None # Referencia da janela de edicao para evitar poder abrir mais janelas
+        # Precisa ser inicializado para funcionar abrir a tela de Edicao de tarefas
+        self.tarefas = [] 
+        self.algoritmo =""
+        self.quantum =0 
+        self.alpha =0 
+
         # Configurações para definir o tamanho das barras e do gráfico
         self.graficoConfig = {
             'escalaX': 50, # Define a largura de cada unidade de tempo no eixo X
@@ -88,6 +94,20 @@ class SimulEscal:
     # Pega o caminho onde está localizado o arquivo .txt utilizando uma função em Funcoes.py
     def PegarCaminho(self):
         self.caminhoArq = SelArquivo(self.arqAtualEntry)
+
+    # Função atrelada ao botão de Editar para abrir uma nova janela para edição de valores
+    def AbrirJanelaEdicao(self):
+        if(self.caminhoArq):
+            texto = LerArquivo(self.caminhoArq)
+            self.tarefas, self.algoritmo, self.quantum, self.alpha = ProcessarDados(texto)
+        
+        # Focar na janela de edicoes caso esteja aberta e evitar que novas sejam abertas no lugar
+        if self.janelaEdicao and self.janelaEdicao.winfo_exists():
+            self.janelaEdicao.lift()
+            self.janelaEdicao.focus_force()
+            return
+        
+        self.janelaEdicao = AbrirEdicao(self.root, self.caminhoArq,self.tarefas, self.algoritmo, self.quantum, self.alpha)
 
     # Função utilizada para controlar quando o usuário marcar o checkbox para usar passo a passo
     def CheckPasso(self):

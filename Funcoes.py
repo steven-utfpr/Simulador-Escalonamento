@@ -41,7 +41,7 @@ def GerarInstrucoes(algoritmo, tarefas, quantum, alpha):
     if listaInativos: # Verifica se está vazia a lista
        for i in range(len(listaInativos)): # Loop para gerar os detalhes das informações para as instruções inativas  
            instrucoesInativas.append (CriarDadosInstrucao(listaInativos[i], listaInativos[i]['ingressoTempo'],True) )
-
+    
     if instrucoes[len(instrucoes)-1]['id'] == -1: # Verifica se a ultima instrução é ociosidade
         instrucoes.pop() # Remove a ultima instrução de ociosidade
 
@@ -170,3 +170,45 @@ def AtualizarLog(logBox, mensagem):
     logBox.insert(tk.END, mensagem + "\n")
     logBox.see(inicioMsg) # Centraliza no topo a exibição do texto ao ser escrito
 
+# Funcao para salvar os dados editados na janela Edição
+def Salvar(blocosTarefa, algoritmo, quantum, alpha, nomeArquivo, caminhoOriginal):
+    # Verifica se o nome do arquivo tem a extensão .txt para adicionar
+    if not nomeArquivo.endswith('.txt'):
+        nomeArquivo += '.txt'
+
+    # Para garantir que o local seja salvo na mesma pasta onde esta o app
+    dirSaida = os.path.dirname(caminhoOriginal) if caminhoOriginal else os.getcwd()
+    caminhoSaida = os.path.join(dirSaida, nomeArquivo)
+
+    # Primeira linha contendo o algortimo, quantum e alpha para envelhecimento
+    linhas = [f"{algoritmo};{quantum};{alpha}"]
+    
+    # Para cada bloco criado na edição, escrever eles em linhas diferentes
+    for bloco in blocosTarefa:
+        if not bloco.winfo_exists(): # Garante que blocos deletado durante a edição nao sejam pegos
+            continue
+        d = bloco.dados
+        # Pega as informações contidas nos campos de TextEntry para escrever a linha
+        linha = f"{d['nome'].get()};{d['cor'].get()};{d['ingresso'].get()};{d['duracao'].get()};{d['prioridade'].get()}"
+        
+        # Adiciona os eventos relacionados a tarefa na mesma linha
+        # O tipo de informações não são os valores direto e sim o campo de tk das variaveis de TextEntry
+        # Necessitando usar .get() e outras chamadas
+        evs = []
+        for ev in d['eventos']:
+            t = ev['tipo'].get().strip().upper()
+            if t == "IO":
+                evs.append(f"IO:{ev['inicio'].get()}-{ev['duracao'].get()}")
+            elif t in ("ML", "MU"):
+                evs.append(f"{t}{ev['mutex'].get()}:{ev['instante'].get()}")
+
+        # Adiciona efetivamente as linhas contendo os eventos junto a linha contendo as informações iniciais da tarefa
+        if evs:
+            linha += ";" + ";".join(evs)
+        
+        # Adiciona a uma lista a linha para ser escreti tudo de uma vez
+        linhas.append(linha)
+
+    # Faz a escrita das linhas no arquivo:
+    with open(caminhoSaida, 'w', encoding='utf-8') as f:
+        f.write("\n".join(linhas))
